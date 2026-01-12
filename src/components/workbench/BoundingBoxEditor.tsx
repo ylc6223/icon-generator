@@ -77,6 +77,23 @@ export function BoundingBoxEditor({
     setLabelError('');
   }, [iconLabels]);
 
+  // 输入框自动聚焦和全选文本
+  useEffect(() => {
+    if (!editingLabel) return;
+
+    // 使用 requestAnimationFrame 确保输入框已渲染
+    requestAnimationFrame(() => {
+      const input = document.querySelector(
+        `input[data-input-box-id="${editingLabel}"]`
+      ) as HTMLInputElement;
+
+      if (input) {
+        input.focus();
+        input.select(); // 全选文本
+      }
+    });
+  }, [editingLabel]);
+
   // 保存标签
   const saveLabel = useCallback((boxId: string) => {
     const error = validateLabel(labelInput, boxId);
@@ -440,6 +457,7 @@ export function BoundingBoxEditor({
                     className="w-full px-2 py-1 text-sm border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="输入标签..."
                     autoFocus
+                    data-input-box-id={box.id}
                   />
                   {labelError && (
                     <div className="flex items-center gap-1 text-destructive text-xs mt-1">

@@ -146,3 +146,34 @@ body,
   width: 100%;
   height: 100%;
 }
+
+/* Context Menu Animations - 150ms fade in/out */
+@keyframes context-menu-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes context-menu-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.animate-context-menu-in {
+  animation: context-menu-fade-in 150ms ease-out;
+}
+
+.animate-context-menu-out {
+  animation: context-menu-fade-out 100ms ease-in;
+}

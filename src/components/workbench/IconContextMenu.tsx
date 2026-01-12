@@ -51,7 +51,7 @@ export function IconContextMenu({
       <ContextMenuTrigger asChild>
         {children}
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-48">
+      <ContextMenuContent className="w-48 animate-context-menu-in data-[state=closed]:animate-context-menu-out">
         {CONTEXT_MENU_ITEMS.map((item) => {
           // 处理分隔符
           if (item.separator) {
