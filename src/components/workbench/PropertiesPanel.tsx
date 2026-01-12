@@ -1,5 +1,6 @@
-import { Sliders } from 'lucide-react';
+import { Sliders, Grid3x3 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { cn } from '@/lib/utils';
 import {
@@ -73,31 +74,66 @@ export function PropertiesPanel() {
         <div className="p-4 space-y-6">
           {/* Grid Settings */}
           <div className="space-y-3">
-            <Label className="text-body-sm text-muted-foreground">
+            <Label className="text-body-sm text-muted-foreground flex items-center gap-2">
+              <Grid3x3 className="w-4 h-4" />
               {t('propertiesPanel.gridLayout')}
             </Label>
-            <Select
-              value={`${gridRows}x${gridCols}`}
-              onValueChange={(value) => {
-                const [rows, cols] = value.split('x').map(Number);
-                setGridSize(rows, cols);
-              }}
-              disabled={isProcessing}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('propertiesPanel.gridSize')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="3x3">3 x 3 (9 icons)</SelectItem>
-                <SelectItem value="4x4">4 x 4 (16 icons)</SelectItem>
-                <SelectItem value="5x5">5 x 5 (25 icons)</SelectItem>
-                <SelectItem value="6x6">6 x 6 (36 icons)</SelectItem>
-                <SelectItem value="8x8">8 x 8 (64 icons)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              💡 网格设置应匹配图片的实际图标布局
-            </p>
+
+            {/* 当前设置显示 */}
+            <div className="bg-muted rounded-lg p-3 border border-border">
+              <div className="flex items-center justify-between">
+                <span className="text-body-sm text-muted-foreground">当前网格</span>
+                <span className="text-headline-sm font-semibold text-primary">
+                  {gridRows} × {gridCols}
+                </span>
+              </div>
+              <div className="text-body-sm text-muted-foreground mt-1">
+                共 {gridRows * gridCols} 个图标
+              </div>
+            </div>
+
+            {/* 快速预设按钮 */}
+            <div className="space-y-2">
+              <span className="text-xs text-muted-foreground">快速选择</span>
+              <div className="grid grid-cols-4 gap-2">
+                {[2, 3, 4, 5, 6, 7, 8].map((size) => (
+                  <Button
+                    key={size}
+                    variant={gridRows === size && gridCols === size ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setGridSize(size, size)}
+                    disabled={isProcessing}
+                    className="text-body-sm"
+                  >
+                    {size}×{size}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* 自定义网格（下拉菜单） */}
+            <div className="space-y-2">
+              <span className="text-xs text-muted-foreground">自定义网格</span>
+              <Select
+                value={`${gridRows}x${gridCols}`}
+                onValueChange={(value) => {
+                  const [rows, cols] = value.split('x').map(Number);
+                  setGridSize(rows, cols);
+                }}
+                disabled={isProcessing}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t('propertiesPanel.gridSize')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2x3">2 x 3 (6 icons)</SelectItem>
+                  <SelectItem value="2x4">2 x 4 (8 icons)</SelectItem>
+                  <SelectItem value="3x4">3 x 4 (12 icons)</SelectItem>
+                  <SelectItem value="4x5">4 x 5 (20 icons)</SelectItem>
+                  <SelectItem value="4x6">4 x 6 (24 icons)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* VTracer 预设 */}

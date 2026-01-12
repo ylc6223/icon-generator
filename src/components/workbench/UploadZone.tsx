@@ -3,7 +3,6 @@ import { Upload, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { useTranslation } from 'react-i18next';
-import { autoDetectGrid } from '@/lib/auto-detect-grid';
 
 interface UploadZoneProps {
   compact?: boolean;
@@ -15,9 +14,6 @@ export function UploadZone({ compact = false }: UploadZoneProps) {
     setOriginalImage,
     originalImage,
     imageInfo,
-    setGridSize,
-    setDetectedGrid,
-    setShowGridSuggestion,
   } = useWorkbenchStore();
   const { t } = useTranslation();
 
@@ -34,35 +30,17 @@ export function UploadZone({ compact = false }: UploadZoneProps) {
         // Get image dimensions
         const img = new Image();
         img.onload = async () => {
-          // 先设置图片
+          // 设置图片
           setOriginalImage(result, {
             width: img.width,
             height: img.height,
           });
-
-          // 自动检测网格布局
-          console.log('🔍 开始自动检测网格...');
-          const detected = await autoDetectGrid(result);
-
-          if (detected && detected.confidence > 0.6) {
-            // 置信度大于 60% 才建议使用
-            console.log(`✅ 检测到 ${detected.detectedGridSize} 网格，置信度: ${(detected.confidence * 100).toFixed(1)}%`);
-            setDetectedGrid(detected);
-            setShowGridSuggestion(true);
-
-            // 自动应用检测结果
-            setGridSize(detected.rows, detected.cols);
-          } else {
-            console.log('⚠️ 无法自动检测网格，使用默认设置');
-            setDetectedGrid(null);
-            setShowGridSuggestion(false);
-          }
         };
         img.src = result;
       };
       reader.readAsDataURL(file);
     },
-    [setOriginalImage, setGridSize, setDetectedGrid, setShowGridSuggestion]
+    [setOriginalImage]
   );
 
   const handleDrop = useCallback((e: React.DragEvent) => {

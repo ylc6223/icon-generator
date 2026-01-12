@@ -2,7 +2,6 @@ import { useEffect, useCallback } from 'react';
 import { Upload, Grid, Image as ImageIcon, Layers } from 'lucide-react';
 import { UploadZone } from './UploadZone';
 import { BoundingBoxEditor } from './BoundingBoxEditor';
-import { GridSuggestionBanner } from './GridSuggestionBanner';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { detectIconsInImage } from '@/lib/icon-processor';
 import { cn } from '@/lib/utils';
@@ -132,9 +131,6 @@ export function CanvasArea() {
           {boundingBoxes.length} {t('canvasArea.iconsDetected')}
         </div>
       </div>
-
-      {/* Grid Suggestion Banner */}
-      <GridSuggestionBanner />
 
       {/* Canvas Content */}
       <div className="flex-1 overflow-auto p-6">
