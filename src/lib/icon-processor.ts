@@ -1,17 +1,22 @@
-import { BoundingBox, VectorizationResult, VectorizationPreset, VECTORIZATION_PRESETS } from '@/stores/workbench-store';
+import { BoundingBox, VectorizationResult } from '@/stores/workbench-store';
 import { traceWithVTracer, initVTracer, isVTracerReady } from './vectorization/vtracer.wasm';
-import { getWorkerPool } from '@/workers';
+
+// 环境变量：是否启用备用矢量化算法（默认关闭）
+const ENABLE_FALLBACK_VECTORIZER = import.meta.env.VITE_ENABLE_FALLBACK_VECTORIZER === 'true';
 
 // 初始化 VTracer WASM（在模块加载时执行）
 let vtracerInitialized = false;
 
 async function ensureVTracerInitialized() {
   if (!vtracerInitialized) {
+    console.log('🔧 开始初始化 VTracer WASM...');
     try {
       await initVTracer();
       vtracerInitialized = true;
+      console.log('✅ VTracer WASM 初始化成功');
     } catch (error) {
-      console.warn('VTracer WASM 初始化失败，将使用备用算法:', error);
+      console.error('❌ VTracer WASM 初始化失败:', error);
+      throw new Error(`VTracer WASM 初始化失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
 }
@@ -86,29 +91,46 @@ export async function detectIconsInImage(
 /**
  * 将位图转换为SVG (使用VTracer WASM)
  * @param imageData 图标的base64数据
- * @param preset 矢量化预设
  * @returns SVG字符串
  */
 export async function imageToSvg(
-  imageData: string,
-  preset: VectorizationPreset
+  imageData: string
 ): Promise<string> {
+  console.log('🎨 开始矢量化图像...');
+
   // 确保 VTracer 已初始化
   await ensureVTracerInitialized();
 
-  // 如果 VTracer 可用，使用它
-  if (isVTracerReady()) {
-    try {
-      return await traceWithVTracer(imageData, preset);
-    } catch (error) {
-      console.warn('VTracer 矢量化失败，使用备用算法:', error);
-      // 降级到备用算法
-      return await imageToSvgFallback(imageData, preset);
+  // 检查 VTracer 是否可用
+  if (!isVTracerReady()) {
+    const errorMsg = 'VTracer WASM 未初始化，无法进行矢量化';
+    console.error('❌', errorMsg);
+
+    if (ENABLE_FALLBACK_VECTORIZER) {
+      console.warn('⚠️ 备用算法已启用，使用备用矢量化算法');
+      return await imageToSvgFallback(imageData);
     }
+
+    throw new Error(errorMsg);
   }
 
-  // 否则使用备用算法
-  return await imageToSvgFallback(imageData, preset);
+  console.log('✅ VTracer 已就绪，开始矢量化...');
+
+  try {
+    const svg = await traceWithVTracer(imageData);
+    console.log('✅ 矢量化完成，SVG 长度:', svg.length);
+    return svg;
+  } catch (error) {
+    console.error('❌ VTracer 矢量化失败:', error);
+
+    // 只有在环境变量启用时才使用备用算法
+    if (ENABLE_FALLBACK_VECTORIZER) {
+      console.warn('⚠️ 备用算法已启用，降级到备用矢量化算法');
+      return await imageToSvgFallback(imageData);
+    }
+
+    throw new Error(`矢量化失败: ${error instanceof Error ? error.message : '未知错误'}`);
+  }
 }
 
 /**
@@ -116,8 +138,7 @@ export async function imageToSvg(
  * 使用简单的 potrace 算法
  */
 async function imageToSvgFallback(
-  imageData: string,
-  preset: VectorizationPreset
+  imageData: string
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -129,17 +150,15 @@ async function imageToSvgFallback(
         return;
       }
 
-      // 根据预设调整缩放
-      const scaleFactor = preset.name === 'detailed' ? 2 : preset.name === 'clean' ? 1.5 : 1;
+      const scaleFactor = 2;
       canvas.width = img.width * scaleFactor;
       canvas.height = img.height * scaleFactor;
 
-      ctx.imageSmoothingEnabled = preset.name !== 'detailed';
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       // 获取图像数据并生成SVG
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const svg = traceToSvg(imgData, preset);
+      const svg = traceToSvg(imgData);
 
       resolve(svg);
     };
@@ -150,14 +169,12 @@ async function imageToSvgFallback(
 /**
  * 矢量化单个图标并返回完整结果
  * @param imageData 图标的base64数据
- * @param preset 矢量化预设
  * @returns 矢量化结果
  */
 export async function vectorizeIcon(
-  imageData: string,
-  preset: VectorizationPreset
+  imageData: string
 ): Promise<VectorizationResult> {
-  const svg = await imageToSvg(imageData, preset);
+  const svg = await imageToSvg(imageData);
 
   // 计算 SVG 文件大小
   const fileSize = new Blob([svg]).size;
@@ -186,52 +203,37 @@ export async function vectorizeIcon(
 }
 
 /**
- * 批量矢量化图标 (使用WebWorker并发处理)
+ * 批量矢量化图标（在主线程顺序处理，因为 VTracer WASM 需要 DOM）
  * @param images 图标数组
- * @param preset 矢量化预设
  * @param onProgress 进度回调
  * @returns 矢量化结果数组
  */
 export async function batchVectorize(
   images: string[],
-  preset: VectorizationPreset,
   onProgress?: (current: number, total: number) => void
 ): Promise<VectorizationResult[]> {
-  // 分块处理: 超过100个图标时分批处理
-  const CHUNK_SIZE = 100;
-  const chunks: string[][] = [];
-
-  for (let i = 0; i < images.length; i += CHUNK_SIZE) {
-    chunks.push(images.slice(i, i + CHUNK_SIZE));
-  }
-
   const allResults: VectorizationResult[] = [];
-  let completedCount = 0;
 
-  // 获取WorkerPool实例
-  const pool = getWorkerPool();
+  // 由于 VTracer WASM 需要主线程 DOM，改为顺序处理
+  for (let i = 0; i < images.length; i++) {
+    try {
+      const result = await vectorizeIcon(images[i]);
+      allResults.push(result);
 
-  // 逐块处理
-  for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-    const chunk = chunks[chunkIndex];
-
-    // 为当前块创建任务
-    const tasks = chunk.map((imageData, index) => ({
-      id: `icon-${chunkIndex * CHUNK_SIZE + index}`,
-      imageData,
-      preset,
-    }));
-
-    // 使用WorkerPool并发执行任务
-    const results = await pool.batchExecute(tasks, (current, total) => {
-      const overallCompleted = completedCount + current;
+      // 更新进度
       if (onProgress) {
-        onProgress(overallCompleted, images.length);
+        onProgress(i + 1, images.length);
       }
-    });
-
-    allResults.push(...results);
-    completedCount += chunk.length;
+    } catch (error) {
+      console.error(`图标 ${i} 矢量化失败:`, error);
+      // 添加一个失败的结果，避免索引错位
+      allResults.push({
+        svg: '',
+        pathCount: 0,
+        fileSize: 0,
+        warnings: [`矢量化失败: ${error instanceof Error ? error.message : '未知错误'}`],
+      });
+    }
   }
 
   return allResults;
@@ -241,13 +243,11 @@ export async function batchVectorize(
  * 简单的图像追踪转SVG（临时实现，将被VTracer WASM替代）
  */
 function traceToSvg(
-  imageData: ImageData,
-  preset: VectorizationPreset
+  imageData: ImageData
 ): string {
   const { width, height, data } = imageData;
 
-  // 根据预设设置阈值
-  const threshold = preset.name === 'clean' ? 200 : preset.name === 'detailed' ? 128 : 160;
+  const threshold = 128;
 
   // 创建二值化表示
   const binary: boolean[][] = [];
@@ -270,9 +270,8 @@ function traceToSvg(
   // 生成路径
   const paths = generatePaths(binary, width, height);
 
-  // 根据预设简化路径
-  const simplifyFactor = preset.name === 'detailed' ? 0.5 : preset.name === 'clean' ? 2 : 1;
-  const simplifiedPaths = paths.map(path => simplifyPath(path, simplifyFactor));
+  // 简化路径
+  const simplifiedPaths = paths.map(path => simplifyPath(path, 1));
 
   const pathStrings = simplifiedPaths
     .filter(p => p.length > 2)
@@ -445,14 +444,12 @@ function simplifyPath(path: Point[], tolerance: number): Point[] {
  * @param boxes 边界框数组
  * @param vectorizedIcons 矢量化结果Map
  * @param iconLabels 图标标签Map
- * @param preset 矢量化预设
  * @returns ZIP文件Blob
  */
 export async function exportIconsAsZip(
   boxes: BoundingBox[],
   vectorizedIcons: Map<string, VectorizationResult>,
-  iconLabels: Map<string, string>,
-  preset: VectorizationPreset
+  iconLabels: Map<string, string>
 ): Promise<Blob> {
   const JSZip = (await import('jszip')).default;
   const zip = new JSZip();
@@ -462,7 +459,7 @@ export async function exportIconsAsZip(
     let result = vectorizedIcons.get(box.id);
 
     if (!result && box.imageData) {
-      result = await vectorizeIcon(box.imageData, preset);
+      result = await vectorizeIcon(box.imageData);
     }
 
     if (result) {

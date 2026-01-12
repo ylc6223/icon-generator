@@ -12,18 +12,29 @@ import {
 import { useTranslation } from 'react-i18next';
 import { IconPreviewPanel } from './IconPreviewPanel';
 import { Separator } from '@/components/ui/separator';
+import { setVTracerPreset } from '@/lib/vectorization/vtracer.wasm';
+import { getAvailablePresets } from '@/lib/vtracer-presets';
 
 export function PropertiesPanel() {
   const {
     originalImage,
-    selectedPreset,
-    setSelectedPreset,
+    vTracerPresetName,
+    setVTracerPresetName,
     gridRows,
     gridCols,
     setGridSize,
     isProcessing,
   } = useWorkbenchStore();
   const { t } = useTranslation();
+
+  // VTracer 预设列表
+  const vTracerPresets = getAvailablePresets();
+
+  // 处理 VTracer 预设切换
+  const handleVTracerPresetChange = (presetName: string) => {
+    setVTracerPresetName(presetName);
+    setVTracerPreset(presetName);
+  };
 
   if (!originalImage) {
     return (
@@ -86,47 +97,36 @@ export function PropertiesPanel() {
             </Select>
           </div>
 
-          {/* Vectorization Preset */}
+          {/* VTracer 预设 */}
           <div className="space-y-3">
             <Label className="text-body-sm text-muted-foreground">
-              {t('propertiesPanel.vectorizationQuality')}
+              矢量化质量
             </Label>
-            <div className="space-y-2">
-              {(['balanced', 'clean', 'detailed'] as const).map((preset) => (
-                <button
-                  key={preset}
-                  onClick={() => setSelectedPreset(preset)}
-                  disabled={isProcessing}
-                  className={cn(
-                    'w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-all',
-                    selectedPreset.name === preset
-                      ? 'border-primary bg-accent'
-                      : 'border-border bg-surface hover:border-border-strong'
-                  )}
-                >
-                  <div className={cn(
-                    'w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0',
-                    selectedPreset.name === preset
-                      ? 'border-primary bg-primary'
-                      : 'border-muted-foreground/40'
-                  )}>
-                    {selectedPreset.name === preset && (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-body-sm font-medium text-foreground">
-                      {t(`propertiesPanel.presets.${preset}`)}
-                    </p>
-                    <p className="text-body-sm text-muted-foreground">
-                      {t(`propertiesPanel.presets.${preset}Desc`)}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
+            <Select
+              value={vTracerPresetName}
+              onValueChange={handleVTracerPresetChange}
+              disabled={isProcessing}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="选择质量级别" />
+              </SelectTrigger>
+              <SelectContent>
+                {vTracerPresets.map((preset) => (
+                  <SelectItem key={preset.name} value={preset.name}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{preset.displayName}</span>
+                      <span className="text-xs text-muted-foreground">{preset.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              当前：{vTracerPresets.find(p => p.name === vTracerPresetName)?.displayName}
+              {vTracerPresetName === 'ultra' && ' - 文件较大但细节最全'}
+              {vTracerPresetName === 'minimal' && ' - 文件最小但细节较少'}
+              {vTracerPresetName === 'detailed' && ' - 推荐使用'}
+            </p>
           </div>
         </div>
       </div>

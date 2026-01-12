@@ -18,36 +18,6 @@ export interface VectorizationResult {
   warnings: string[];
 }
 
-// 矢量化预设接口
-export interface VectorizationPreset {
-  name: 'clean' | 'balanced' | 'detailed';
-  colorCount: number;
-  minArea: number;
-  strokeWidth: number;
-}
-
-// 预设配置
-export const VECTORIZATION_PRESETS: Record<'clean' | 'balanced' | 'detailed', VectorizationPreset> = {
-  clean: {
-    name: 'clean',
-    colorCount: 4,
-    minArea: 100,
-    strokeWidth: 2,
-  },
-  balanced: {
-    name: 'balanced',
-    colorCount: 8,
-    minArea: 50,
-    strokeWidth: 1,
-  },
-  detailed: {
-    name: 'detailed',
-    colorCount: 16,
-    minArea: 10,
-    strokeWidth: 0.5,
-  },
-};
-
 export interface WorkbenchState {
   // 上传的图片
   originalImage: string | null; // Canvas引用，按需提取数据
@@ -64,12 +34,13 @@ export interface WorkbenchState {
 
   // 矢量化结果
   vectorizedIcons: Map<string, VectorizationResult>;
-  selectedPreset: VectorizationPreset;
+  vTracerPresetName: string; // VTracer 预设名称：minimal | balanced | detailed | ultra
 
   // 图标标签
   iconLabels: Map<string, string>;
 
   // UI状态
+  status: 'idle' | 'uploading' | 'detecting' | 'processing' | 'ready';
   isProcessing: boolean;
   processingProgress: number;
   processingStage: 'detecting' | 'vectorizing' | 'exporting'; // 分步进度显示
@@ -89,7 +60,9 @@ export interface WorkbenchState {
 
   // 矢量化操作
   vectorizeIcon: (id: string, result: VectorizationResult) => void;
-  setSelectedPreset: (preset: VectorizationPreset) => void;
+  setVectorizedIcons: (icons: Map<string, VectorizationResult>) => void;
+  setVTracerPresetName: (presetName: string) => void; // 设置 VTracer 预设
+  setStatus: (status: WorkbenchState['status']) => void;
 
   // 标签操作
   setIconLabel: (id: string, label: string) => void;
@@ -111,8 +84,9 @@ const initialState = {
   selectedBox: null as string | null,
   boxHistory: [] as BoundingBox[][],
   vectorizedIcons: new Map<string, VectorizationResult>(),
-  selectedPreset: VECTORIZATION_PRESETS.balanced,
+  vTracerPresetName: 'detailed', // 默认使用 detailed 模式
   iconLabels: new Map<string, string>(),
+  status: 'idle' as const,
   isProcessing: false,
   processingProgress: 0,
   processingStage: 'detecting' as const,
@@ -179,7 +153,13 @@ export const useWorkbenchStore = create<WorkbenchState>((set) => ({
     return { vectorizedIcons: newMap };
   }),
 
-  setSelectedPreset: (preset) => set({ selectedPreset: preset }),
+  setVectorizedIcons: (icons) => set({ vectorizedIcons: icons }),
+
+  setVTracerPresetName: (presetName) => set({
+    vTracerPresetName: presetName,
+  }),
+
+  setStatus: (status) => set({ status }),
 
   // 标签操作
   setIconLabel: (id, label) => set((state) => {
