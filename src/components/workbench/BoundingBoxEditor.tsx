@@ -3,6 +3,7 @@ import { Check, X, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useWorkbenchStore, BoundingBox } from '@/stores/workbench-store';
+import { IconContextMenu } from './IconContextMenu';
 
 interface BoundingBoxEditorProps {
   imageWidth: number;
@@ -114,16 +115,43 @@ export function BoundingBoxEditor({
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' && selectedBox) {
-        onBoxDelete(selectedBox);
-      } else if (e.key === 'Escape') {
+      // 只在有选中图标时响应快捷键（ESC 除外）
+      if (!selectedBox && e.key !== 'Escape') return;
+
+      // 输入框打开时，禁用所有全局快捷键（ESC 除外）
+      if (editingLabel) {
+        if (e.key === 'Escape') {
+          cancelEditingLabel();
+        }
+        return;
+      }
+
+      // ESC 键：取消选择或取消编辑
+      if (e.key === 'Escape') {
         onBoxSelect(null);
+        return;
+      }
+
+      // F2 键或 Ctrl+R：重命名
+      if (e.key === 'F2' || (e.key === 'r' && (e.ctrlKey || e.metaKey))) {
+        e.preventDefault();
+        onSaveHistory();
+        startEditingLabel(selectedBox);
+        return;
+      }
+
+      // Delete 键：删除选中图标
+      if (e.key === 'Delete') {
+        e.preventDefault();
+        onSaveHistory();
+        onBoxDelete(selectedBox);
+        return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBox, onBoxSelect, onBoxDelete]);
+  }, [selectedBox, editingLabel, onBoxSelect, onBoxDelete, onSaveHistory, startEditingLabel, cancelEditingLabel]);
 
   // 计算鼠标位置相对于容器的坐标
   const getRelativePosition = useCallback((clientX: number, clientY: number) => {
@@ -295,33 +323,43 @@ export function BoundingBoxEditor({
         const height = (box.height / imageHeight) * 100;
 
         return (
-          <motion.div
+          <IconContextMenu
             key={box.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{
-              opacity: 1,
-              scale: isSelected ? 1.02 : 1,
+            onRename={() => {
+              onSaveHistory();
+              startEditingLabel(box.id);
             }}
-            transition={{
-              type: 'spring',
-              stiffness: 300,
-              damping: 20,
-            }}
-            onMouseDown={(e) => handleMouseDown(e, box)}
-            className={cn(
-              'absolute border-2 transition-colors duration-150 group',
-              isSelected
-                ? 'border-primary bg-primary/5 z-10'
-                : 'border-muted-foreground/50 bg-muted-foreground/5 hover:border-primary/70'
-            )}
-            style={{
-              left: `${left}%`,
-              top: `${top}%`,
-              width: `${width}%`,
-              height: `${height}%`,
-              cursor: getCursorStyle(box),
+            onDelete={() => {
+              onSaveHistory();
+              onBoxDelete(box.id);
             }}
           >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{
+                opacity: 1,
+                scale: isSelected ? 1.02 : 1,
+              }}
+              transition={{
+                type: 'spring',
+                stiffness: 300,
+                damping: 20,
+              }}
+              onMouseDown={(e) => handleMouseDown(e, box)}
+              className={cn(
+                'absolute border-2 transition-colors duration-150 group',
+                isSelected
+                  ? 'border-primary bg-primary/5 z-10'
+                  : 'border-muted-foreground/50 bg-muted-foreground/5 hover:border-primary/70'
+              )}
+              style={{
+                left: `${left}%`,
+                top: `${top}%`,
+                width: `${width}%`,
+                height: `${height}%`,
+                cursor: getCursorStyle(box),
+              }}
+            >
             {/* 选中时显示控制点 */}
             {isSelected && (
               <>
@@ -430,20 +468,17 @@ export function BoundingBoxEditor({
             ) : (
               <div
                 className={cn(
-                  'absolute -top-5 left-0 px-1.5 py-0.5 text-xs font-medium rounded cursor-pointer flex items-center gap-1',
+                  'absolute -top-5 left-0 px-1.5 py-0.5 text-xs font-medium rounded flex items-center gap-1',
                   isSelected
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity'
                 )}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  startEditingLabel(box.id);
-                }}
               >
                 {iconLabels.get(box.id) || box.id}
               </div>
             )}
           </motion.div>
+          </IconContextMenu>
         );
       })}
     </div>

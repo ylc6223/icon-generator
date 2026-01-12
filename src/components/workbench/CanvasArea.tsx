@@ -173,11 +173,11 @@ function OriginalView({
 }: OriginalViewProps) {
   return (
     <div className="flex items-center justify-center min-h-full">
-      <div className="relative inline-block rounded-lg overflow-hidden shadow-soft-lg bg-background">
+      <div className="relative inline-block shadow-soft-lg bg-background">
         <img
           src={originalImage}
           alt="Original matrix"
-          className="max-w-full max-h-[calc(100vh-280px)] object-contain"
+          className="max-w-full max-h-[calc(100vh-280px)] object-contain rounded-lg"
         />
 
         {/* Bounding Box Editor */}
