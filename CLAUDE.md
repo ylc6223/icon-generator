@@ -198,3 +198,7 @@ Icon processing is async and returns Promises - use `await` or `.then()` when ca
 
 ## 开发规范
 每次完成一个小阶段的功能及时更新在checklist文件里面并提交代码，changelog文件也要写入，对于核心的矢量转换模块优先使用vtracer.wasm
+vtracer官方文章地址：
+https://www.visioncortex.org/
+文档：
+https://github.com/visioncortex/vtracer/tree/master/docs

@@ -18,6 +18,10 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
+      fs: {
+        // 允许访问 public 目录下的 WASM 文件
+        allow: ['..'],
+      },
     },
     plugins: plugins.filter(Boolean) as PluginOption[],
     resolve: {
@@ -43,7 +47,9 @@ export default defineConfig(({ mode }) => {
           }
           warn(warning);
         }
-      }
+      },
+      // 确保 WASM 文件被正确复制
+      assetsInclude: ['**/*.wasm'],
     },
     optimizeDeps: {
       exclude: ['src/reference/enter_AIIcon'],
