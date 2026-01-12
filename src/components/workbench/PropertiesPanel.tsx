@@ -1,5 +1,4 @@
-import { Sliders, CheckSquare, Square } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Sliders } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { cn } from '@/lib/utils';
@@ -14,22 +13,17 @@ import { useTranslation } from 'react-i18next';
 
 export function PropertiesPanel() {
   const {
-    uploadedImage,
-    vectorizationPreset,
-    setVectorizationPreset,
-    gridSize,
+    originalImage,
+    selectedPreset,
+    setSelectedPreset,
+    gridRows,
+    gridCols,
     setGridSize,
-    detectedIcons,
-    selectAllIcons,
-    deselectAllIcons,
-    status,
+    isProcessing,
   } = useWorkbenchStore();
   const { t } = useTranslation();
 
-  const selectedCount = detectedIcons.filter(i => i.selected).length;
-  const allSelected = selectedCount === detectedIcons.length;
-
-  if (!uploadedImage) {
+  if (!originalImage) {
     return (
       <aside className="w-right-panel h-full flex flex-col border-l border-border bg-background">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
@@ -61,12 +55,12 @@ export function PropertiesPanel() {
             {t('propertiesPanel.gridLayout')}
           </Label>
           <Select
-            value={`${gridSize.rows}x${gridSize.cols}`}
+            value={`${gridRows}x${gridCols}`}
             onValueChange={(value) => {
               const [rows, cols] = value.split('x').map(Number);
               setGridSize(rows, cols);
             }}
-            disabled={status === 'processing'}
+            disabled={isProcessing}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder={t('propertiesPanel.gridSize')} />
@@ -87,25 +81,25 @@ export function PropertiesPanel() {
             {t('propertiesPanel.vectorizationQuality')}
           </Label>
           <div className="space-y-2">
-            {(['balanced', 'clean', 'precise'] as const).map((preset) => (
+            {(['balanced', 'clean', 'detailed'] as const).map((preset) => (
               <button
                 key={preset}
-                onClick={() => setVectorizationPreset(preset)}
-                disabled={status === 'processing'}
+                onClick={() => setSelectedPreset(preset)}
+                disabled={isProcessing}
                 className={cn(
                   'w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-all',
-                  vectorizationPreset === preset
+                  selectedPreset.name === preset
                     ? 'border-primary bg-accent'
                     : 'border-border bg-surface hover:border-border-strong'
                 )}
               >
                 <div className={cn(
                   'w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0',
-                  vectorizationPreset === preset
+                  selectedPreset.name === preset
                     ? 'border-primary bg-primary'
                     : 'border-muted-foreground/40'
                 )}>
-                  {vectorizationPreset === preset && (
+                  {selectedPreset.name === preset && (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
                     </div>
@@ -123,37 +117,6 @@ export function PropertiesPanel() {
             ))}
           </div>
         </div>
-
-        {/* Selection Actions */}
-        {detectedIcons.length > 0 && (
-          <div className="space-y-3 pt-4 border-t border-border">
-            <Label className="text-body-sm text-muted-foreground">
-              {t('propertiesPanel.selection')}
-            </Label>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={selectAllIcons}
-                disabled={allSelected}
-                className="flex-1 gap-1.5"
-              >
-                <CheckSquare className="w-3.5 h-3.5" />
-                {t('propertiesPanel.all')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={deselectAllIcons}
-                disabled={selectedCount === 0}
-                className="flex-1 gap-1.5"
-              >
-                <Square className="w-3.5 h-3.5" />
-                {t('propertiesPanel.none')}
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     </aside>
   );

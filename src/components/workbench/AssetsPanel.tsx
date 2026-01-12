@@ -4,7 +4,7 @@ import { useWorkbenchStore } from '@/stores/workbench-store';
 import { useTranslation } from 'react-i18next';
 
 export function AssetsPanel() {
-  const { uploadedImage } = useWorkbenchStore();
+  const { originalImage } = useWorkbenchStore();
   const { t } = useTranslation();
 
   return (
@@ -23,11 +23,11 @@ export function AssetsPanel() {
             <label className="text-body-sm text-muted-foreground">
               {t('assetsPanel.sourceImage')}
             </label>
-            <UploadZone compact={!!uploadedImage} />
+            <UploadZone compact={!!originalImage} />
           </div>
 
           {/* Info Section - Only show when image is uploaded */}
-          {uploadedImage && (
+          {originalImage && (
             <div className="pt-4 border-t border-border space-y-3">
               <div className="space-y-1">
                 <label className="text-body-sm text-muted-foreground">

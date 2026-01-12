@@ -15,18 +15,30 @@ import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export function TopBar() {
-  const { detectedIcons, status, vectorizationPreset, reset } = useWorkbenchStore();
+  const {
+    boundingBoxes,
+    selectedBox,
+    vectorizedIcons,
+    iconLabels,
+    selectedPreset,
+    isProcessing,
+    reset
+  } = useWorkbenchStore();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
 
-  const selectedCount = detectedIcons.filter(icon => icon.selected).length;
-  const canExport = status === 'ready' && selectedCount > 0;
+  const canExport = boundingBoxes.length > 0 && !isProcessing;
 
   const handleExport = async () => {
     if (!canExport) return;
 
     try {
-      const blob = await exportIconsAsZip(detectedIcons, vectorizationPreset);
+      const blob = await exportIconsAsZip(
+        boundingBoxes,
+        vectorizedIcons,
+        iconLabels,
+        selectedPreset
+      );
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -38,7 +50,7 @@ export function TopBar() {
 
       toast({
         title: t('toasts.exportSuccess'),
-        description: t('toasts.exportSuccessDesc', { count: selectedCount }),
+        description: t('toasts.exportSuccessDesc', { count: boundingBoxes.length }),
       });
     } catch (error) {
       toast({
@@ -67,7 +79,7 @@ export function TopBar() {
       {/* Center: Project Name (optional) */}
       <div className="hidden md:flex items-center">
         <span className="text-body-sm text-muted-foreground">
-          {status === 'idle' ? t('topBar.noProject') : t('topBar.projectName')}
+          {boundingBoxes.length === 0 ? t('topBar.noProject') : `${boundingBoxes.length} ${t('canvasArea.iconsDetected')}`}
         </span>
       </div>
 
@@ -81,9 +93,9 @@ export function TopBar() {
         >
           <Download className="w-4 h-4" />
           <span className="hidden sm:inline">{t('topBar.export')}</span>
-          {selectedCount > 0 && (
+          {boundingBoxes.length > 0 && (
             <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary-foreground/20 rounded">
-              {selectedCount}
+              {boundingBoxes.length}
             </span>
           )}
         </Button>
