@@ -95,6 +95,9 @@ export function PropertiesPanel() {
                 <SelectItem value="8x8">8 x 8 (64 icons)</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              💡 网格设置应匹配图片的实际图标布局
+            </p>
           </div>
 
           {/* VTracer 预设 */}
