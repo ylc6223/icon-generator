@@ -29,6 +29,11 @@ export function CanvasArea() {
   } = useWorkbenchStore();
   const { t } = useTranslation();
 
+  // 阻止右键菜单
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+  }, []);
+
   // 处理撤销/重做快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -71,7 +76,7 @@ export function CanvasArea() {
   // Empty state
   if (!originalImage) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-canvas p-8">
+      <div className="flex-1 flex flex-col items-center justify-center bg-canvas p-8" onContextMenu={handleContextMenu}>
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted mb-4">
@@ -105,7 +110,7 @@ export function CanvasArea() {
   // Processing state
   if (isProcessing) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-canvas">
+      <div className="flex-1 flex flex-col items-center justify-center bg-canvas" onContextMenu={handleContextMenu}>
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-4 animate-pulse">
             <Layers className="w-6 h-6 text-primary" />
@@ -120,7 +125,7 @@ export function CanvasArea() {
 
   // Ready state with results
   return (
-    <div className="flex-1 flex flex-col bg-canvas overflow-hidden">
+    <div className="flex-1 flex flex-col bg-canvas overflow-hidden" onContextMenu={handleContextMenu}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
         <div className="text-body-sm text-muted-foreground">
