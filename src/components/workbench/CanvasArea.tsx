@@ -64,14 +64,15 @@ export function CanvasArea() {
       console.error('Failed to process image:', error);
       setProcessing(false, 'detecting', 0);
     }
-  }, [originalImage, gridRows, gridCols, imageInfo, setBoundingBoxes, setProcessing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [originalImage, imageInfo, setBoundingBoxes, setProcessing]);
 
-  // Process image when uploaded
+  // Process image when uploaded or when grid settings change
   useEffect(() => {
-    if (originalImage && imageInfo && boundingBoxes.length === 0) {
+    if (originalImage && imageInfo) {
       processImage();
     }
-  }, [originalImage, imageInfo, boundingBoxes.length, processImage]);
+  }, [originalImage, imageInfo, gridRows, gridCols, processImage]);
 
   // Empty state
   if (!originalImage) {
