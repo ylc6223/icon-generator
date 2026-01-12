@@ -3,6 +3,7 @@ import { Upload, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { useTranslation } from 'react-i18next';
+import { autoDetectGrid } from '@/lib/auto-detect-grid';
 
 interface UploadZoneProps {
   compact?: boolean;
@@ -10,30 +11,59 @@ interface UploadZoneProps {
 
 export function UploadZone({ compact = false }: UploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const { setOriginalImage, originalImage, imageInfo } = useWorkbenchStore();
+  const {
+    setOriginalImage,
+    originalImage,
+    imageInfo,
+    setGridSize,
+    setDetectedGrid,
+    setShowGridSuggestion,
+  } = useWorkbenchStore();
   const { t } = useTranslation();
 
-  const handleFile = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) {
-      return;
-    }
+  const handleFile = useCallback(
+    async (file: File) => {
+      if (!file.type.startsWith('image/')) {
+        return;
+      }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const result = e.target?.result as string;
 
-      // Get image dimensions
-      const img = new Image();
-      img.onload = () => {
-        setOriginalImage(result, {
-          width: img.width,
-          height: img.height,
-        });
+        // Get image dimensions
+        const img = new Image();
+        img.onload = async () => {
+          // 先设置图片
+          setOriginalImage(result, {
+            width: img.width,
+            height: img.height,
+          });
+
+          // 自动检测网格布局
+          console.log('🔍 开始自动检测网格...');
+          const detected = await autoDetectGrid(result);
+
+          if (detected && detected.confidence > 0.6) {
+            // 置信度大于 60% 才建议使用
+            console.log(`✅ 检测到 ${detected.detectedGridSize} 网格，置信度: ${(detected.confidence * 100).toFixed(1)}%`);
+            setDetectedGrid(detected);
+            setShowGridSuggestion(true);
+
+            // 自动应用检测结果
+            setGridSize(detected.rows, detected.cols);
+          } else {
+            console.log('⚠️ 无法自动检测网格，使用默认设置');
+            setDetectedGrid(null);
+            setShowGridSuggestion(false);
+          }
+        };
+        img.src = result;
       };
-      img.src = result;
-    };
-    reader.readAsDataURL(file);
-  }, [setOriginalImage]);
+      reader.readAsDataURL(file);
+    },
+    [setOriginalImage, setGridSize, setDetectedGrid, setShowGridSuggestion]
+  );
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();

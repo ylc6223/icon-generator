@@ -39,6 +39,10 @@ export interface WorkbenchState {
   // 图标标签
   iconLabels: Map<string, string>;
 
+  // 网格检测结果
+  detectedGrid: { rows: number; cols: number; confidence: number } | null;
+  showGridSuggestion: boolean;
+
   // UI状态
   status: 'idle' | 'uploading' | 'detecting' | 'processing' | 'ready';
   isProcessing: boolean;
@@ -68,6 +72,10 @@ export interface WorkbenchState {
   setIconLabel: (id: string, label: string) => void;
   removeIconLabel: (id: string) => void;
 
+  // 网格检测
+  setDetectedGrid: (grid: { rows: number; cols: number; confidence: number } | null) => void;
+  setShowGridSuggestion: (show: boolean) => void;
+
   // 处理状态
   setProcessing: (isProcessing: boolean, stage: WorkbenchState['processingStage'], progress: number) => void;
 
@@ -86,6 +94,8 @@ const initialState = {
   vectorizedIcons: new Map<string, VectorizationResult>(),
   vTracerPresetName: 'detailed', // 默认使用 detailed 模式
   iconLabels: new Map<string, string>(),
+  detectedGrid: null as { rows: number; cols: number; confidence: number } | null,
+  showGridSuggestion: false,
   status: 'idle' as const,
   isProcessing: false,
   processingProgress: 0,
@@ -173,6 +183,10 @@ export const useWorkbenchStore = create<WorkbenchState>((set) => ({
     newMap.delete(id);
     return { iconLabels: newMap };
   }),
+
+  // 网格检测
+  setDetectedGrid: (grid) => set({ detectedGrid: grid }),
+  setShowGridSuggestion: (show) => set({ showGridSuggestion: show }),
 
   // 处理状态
   setProcessing: (isProcessing, stage, progress) => set({
