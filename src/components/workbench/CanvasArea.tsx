@@ -51,28 +51,26 @@ export function CanvasArea() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
 
-  const processImage = useCallback(async () => {
-    if (!originalImage || !imageInfo) return;
-
-    setProcessing(true, 'detecting', 0);
-
-    try {
-      const boxes = await detectIconsInImage(originalImage, gridRows, gridCols);
-      setBoundingBoxes(boxes);
-      setProcessing(false, 'detecting', 100);
-    } catch (error) {
-      console.error('Failed to process image:', error);
-      setProcessing(false, 'detecting', 0);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originalImage, imageInfo, setBoundingBoxes, setProcessing]);
-
   // Process image when uploaded or when grid settings change
   useEffect(() => {
-    if (originalImage && imageInfo) {
-      processImage();
-    }
-  }, [originalImage, imageInfo, gridRows, gridCols, processImage]);
+    const processImage = async () => {
+      if (!originalImage || !imageInfo) return;
+
+      setProcessing(true, 'detecting', 0);
+
+      try {
+        // 直接从 store 读取最新的 gridRows 和 gridCols
+        const boxes = await detectIconsInImage(originalImage, gridRows, gridCols);
+        setBoundingBoxes(boxes);
+        setProcessing(false, 'detecting', 100);
+      } catch (error) {
+        console.error('Failed to process image:', error);
+        setProcessing(false, 'detecting', 0);
+      }
+    };
+
+    processImage();
+  }, [originalImage, imageInfo, gridRows, gridCols, setBoundingBoxes, setProcessing]);
 
   // Empty state
   if (!originalImage) {

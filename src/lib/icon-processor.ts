@@ -36,6 +36,8 @@ export async function detectIconsInImage(
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
+      console.log(`🔍 检测图标: 图片尺寸 ${img.width}x${img.height}, 网格 ${rows}x${cols}`);
+
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) {
@@ -49,6 +51,8 @@ export async function detectIconsInImage(
 
       const cellWidth = Math.floor(img.width / cols);
       const cellHeight = Math.floor(img.height / rows);
+      console.log(`📐 单元格尺寸: ${cellWidth}x${cellHeight}`);
+
       const boxes: BoundingBox[] = [];
 
       for (let row = 0; row < rows; row++) {
@@ -82,6 +86,7 @@ export async function detectIconsInImage(
         }
       }
 
+      console.log(`✅ 生成了 ${boxes.length} 个边界框`);
       resolve(boxes);
     };
     img.src = imageData;
