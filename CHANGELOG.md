@@ -10,6 +10,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **边界框编辑器** (BoundingBoxEditor 组件)
+  - 支持在 Canvas 上拖拽移动边界框
+  - 支持8个控制点调整大小（4个角 + 4条边）
+  - 选中状态高亮显示
+  - 实时预览更新
+  - 显示图标ID/标签标签
+- **撤销/重做功能** (仅边界框操作)
+  - 支持最多5步历史记录
+  - 键盘快捷键：Ctrl+Z (撤销), Ctrl+Shift+Z (重做)
+- **键盘快捷键支持**
+  - Delete: 删除选中的边界框
+  - Esc: 取消选择
+- **状态管理扩展**
+  - 添加 selectedBoxId 状态
+  - 添加 boxHistory 状态（past/future）
+  - 添加边界框操作 actions (selectBox, updateBox, deleteBox, setBoxLabel)
+  - 添加历史管理 actions (saveBoxHistory, undo, redo)
+- **DetectedIcon 接口扩展**
+  - 添加 label 字段用于图标标签
+
+### Changed
+- OriginalView 组件集成 BoundingBoxEditor
+- CanvasArea 组件添加撤销/重做快捷键监听
+- workbench-store 扩展边界框编辑功能
+
+### Fixed
+- 修复边界框位置计算逻辑
+
+---
+
+## [0.2.0] - 2026-01-12
+
+### Added
 - 项目初始化，基于 Vite + React + TypeScript
 - 集成 shadcn/ui 组件库
 - 配置 Zustand 状态管理
@@ -53,5 +86,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 版本说明
 
 - **[Unreleased]**: 正在开发中的功能
-- **[0.1.0]**: 已发布的版本
-- **[0.2.0-alpha]**: 内部测试版本（如适用）
+- **[0.2.0]**: 边界框编辑器版本
+- **[0.1.0]**: 初始版本
