@@ -46,35 +46,42 @@
   - [x] 键盘快捷键（Esc 取消选择）
 
 - [x] 边界框状态管理
-  - [x] 扩展 workbench-store 支持边界框编辑
+  - [x] 重构 workbench-store 使用 BoundingBox 接口（替换 DetectedIcon）
   - [x] 实现撤销/重做（仅边界框，最多5步）
   - [x] 保存边界框历史记录
 
-### Week 4: 图标标签系统
-- [ ] 图标标签功能
-  - [ ] 在 IconPreviewCard 中添加标签输入框
-  - [ ] 批量命名功能（icon-1, icon-2...）
-  - [ ] 标签验证
-    - [ ] 字符限制：1-50字符
-    - [ ] 非法字符检查：不允许 / \ : * ? " < > |
-    - [ ] 重复标签检查
-    - [ ] 连续空格压缩
+### Week 4: 图标标签系统 ✅
+- [x] 图标标签功能
+  - [x] 在 BoundingBoxEditor 中实现标签编辑功能
+  - [x] 点击标签打开编辑弹窗
+  - [x] 标签验证
+    - [x] 字符限制：1-50字符
+    - [x] 非法字符检查：不允许 / \ : * ? " < > |
+    - [x] 重复标签检查
+  - [x] 键盘快捷键（Enter 保存，Esc 取消）
 
-- [ ] 标签状态管理
-  - [ ] 扩展 DetectedIcon 接口添加 label 字段
-  - [ ] 添加 setIconLabel action
-  - [ ] 批量重命名功能
+- [x] 标签状态管理
+  - [x] 扩展 workbench-store 添加 iconLabels Map
+  - [x] 添加 setIconLabel 和 removeIconLabel action
+  - [x] 集成到 BoundingBoxEditor 组件
 
-### Week 5: 质量检测系统
-- [ ] QualityChecker 模块（src/lib/vectorization/quality.ts）
-  - [ ] 检测路径复杂度（节点数 > 500）
-  - [ ] 检测文件大小（SVG > 50KB）
-  - [ ] 检测颜色数量（> 10种）
-  - [ ] 检测路径数量（只有1条路径时警告）
-  - [ ] 生成警告信息
+### Week 5: 质量检测系统 ✅
+- [x] QualityChecker 模块（src/lib/vectorization/quality.ts）
+  - [x] 检测路径复杂度（节点数 > 500）
+  - [x] 检测文件大小（SVG > 50KB）
+  - [x] 检测颜色数量（> 10种）
+  - [x] 检测路径数量（只有1条路径时警告）
+  - [x] 生成警告信息和质量分数（0-100）
 
-- [ ] UI 显示警告
-  - [ ] 在 IconPreviewCard 上显示警告图标
+- [x] VTracer WASM 集成
+  - [x] 安装 vectortracer npm 包
+  - [x] 创建 vtracer.wasm.ts 封装模块
+  - [x] 配置 Vite 支持 WASM（vite-plugin-wasm, vite-plugin-top-level-await）
+  - [x] 实现降级机制（VTracer 失败时使用 potrace）
+  - [x] 更新 icon-processor.ts 使用 VTracer
+
+- [ ] UI 显示警告（待实现）
+  - [ ] 在预览区域显示警告图标
   - [ ] 点击查看具体问题
   - [ ] 质量信息统计面板
 

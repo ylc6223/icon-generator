@@ -10,33 +10,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **边界框编辑器** (BoundingBoxEditor 组件)
-  - 支持在 Canvas 上拖拽移动边界框
-  - 支持8个控制点调整大小（4个角 + 4条边）
-  - 选中状态高亮显示
-  - 实时预览更新
-  - 显示图标ID/标签标签
-- **撤销/重做功能** (仅边界框操作)
-  - 支持最多5步历史记录
-  - 键盘快捷键：Ctrl+Z (撤销), Ctrl+Shift+Z (重做)
-- **键盘快捷键支持**
-  - Delete: 删除选中的边界框
-  - Esc: 取消选择
-- **状态管理扩展**
-  - 添加 selectedBoxId 状态
-  - 添加 boxHistory 状态（past/future）
-  - 添加边界框操作 actions (selectBox, updateBox, deleteBox, setBoxLabel)
-  - 添加历史管理 actions (saveBoxHistory, undo, redo)
-- **DetectedIcon 接口扩展**
-  - 添加 label 字段用于图标标签
+- **图标标签编辑功能** (BoundingBoxEditor 集成)
+  - 点击标签打开编辑弹窗
+  - 实时标签验证（1-50字符限制）
+  - 非法字符检查（不允许 / \ : * ? " < > |）
+  - 重复标签检查
+  - 键盘快捷键：Enter 保存，Esc 取消
+- **VTracer WASM 集成**
+  - 安装并配置 vectortracer npm 包
+  - 创建 vtracer.wasm.ts 封装模块
+  - 实现预设到 VTracer 参数的转换
+  - 添加降级机制（VTracer 失败时使用 potrace）
+- **质量检测模块** (src/lib/vectorization/quality.ts)
+  - QualityChecker 类支持全面的质量检查
+  - 检测路径复杂度（节点数 > 500）
+  - 检测文件大小（SVG > 50KB）
+  - 检测颜色数量（> 10种）
+  - 检测路径数量（只有1条路径时警告）
+  - 检测 SVG 有效性
+  - 检测 viewBox 属性
+  - 生成质量分数（0-100）和改进建议
+- **WASM 支持配置**
+  - 添加 vite-plugin-wasm 插件
+  - 添加 vite-plugin-top-level-await 插件
+  - 更新 vite.config.ts 支持 WebAssembly
 
 ### Changed
-- OriginalView 组件集成 BoundingBoxEditor
-- CanvasArea 组件添加撤销/重做快捷键监听
-- workbench-store 扩展边界框编辑功能
+- **状态结构重构**（按照技术文档规范）
+  - DetectedIcon → BoundingBox 接口重命名
+  - uploadedImage → originalImage 状态重命名
+  - detectedIcons → boundingBoxes 状态重命名
+  - selectedBoxId → selectedBox 状态重命名
+  - gridSize → gridRows/gridCols 分离
+  - 添加 VectorizationResult 接口
+  - 添加 VectorizationPreset 接口
+  - 添加 vectorizedIcons Map
+  - 添加 iconLabels Map
+  - 添加 isProcessing, processingProgress, processingStage 状态
+- **icon-processor.ts 更新**
+  - 使用 VTracer WASM 作为首选矢量化算法
+  - 保留 potrace 作为备用算法
+  - 更新函数签名使用新接口
+  - 添加 vectorizeIcon 和 batchVectorize 函数
+- **BoundingBoxEditor 增强**
+  - 显示用户自定义标签（优先于 ID）
+  - 添加标签编辑弹窗 UI
+  - 集成 store 的 iconLabels Map
+  - 添加标签验证和错误提示
+
+### Removed
+- IconPreviewCard 组件（不再需要）
+- GridView 组件（简化 UI）
 
 ### Fixed
-- 修复边界框位置计算逻辑
+- 修复 VTracer WASM 在 Vite 中的构建问题
+- 修复标签验证逻辑（正确处理空标签和重复标签）
 
 ---
 

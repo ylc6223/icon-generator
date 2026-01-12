@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Check, X, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkbenchStore, BoundingBox } from '@/stores/workbench-store';
 
@@ -29,6 +30,85 @@ export function BoundingBoxEditor({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [initialBox, setInitialBox] = useState<BoundingBox | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // 标签编辑状态
+  const [editingLabel, setEditingLabel] = useState<string | null>(null);
+  const [labelInput, setLabelInput] = useState('');
+  const [labelError, setLabelError] = useState('');
+
+  // 从 store 获取标签相关函数
+  const { iconLabels, setIconLabel, removeIconLabel } = useWorkbenchStore();
+
+  // 验证标签
+  const validateLabel = useCallback((label: string, excludeId?: string): string => {
+    // 长度验证
+    if (label.length < 1) {
+      return '标签不能为空';
+    }
+    if (label.length > 50) {
+      return '标签长度不能超过50个字符';
+    }
+
+    // 特殊字符验证
+    const illegalChars = /[\/\\:*?"<>|]/;
+    if (illegalChars.test(label)) {
+      return '标签不能包含以下字符: / \\ : * ? " < > |';
+    }
+
+    // 重复标签检查
+    const existingLabels = Array.from(iconLabels.entries())
+      .filter(([id]) => id !== excludeId)
+      .map(([, label]) => label);
+
+    if (existingLabels.includes(label)) {
+      return '标签已存在';
+    }
+
+    return '';
+  }, [iconLabels]);
+
+  // 开始编辑标签
+  const startEditingLabel = useCallback((boxId: string) => {
+    const currentLabel = iconLabels.get(boxId) || '';
+    setEditingLabel(boxId);
+    setLabelInput(currentLabel);
+    setLabelError('');
+  }, [iconLabels]);
+
+  // 保存标签
+  const saveLabel = useCallback((boxId: string) => {
+    const error = validateLabel(labelInput, boxId);
+    if (error) {
+      setLabelError(error);
+      return;
+    }
+
+    if (labelInput.trim()) {
+      setIconLabel(boxId, labelInput.trim());
+    } else {
+      removeIconLabel(boxId);
+    }
+
+    setEditingLabel(null);
+    setLabelInput('');
+    setLabelError('');
+  }, [labelInput, validateLabel, setIconLabel, removeIconLabel]);
+
+  // 取消编辑标签
+  const cancelEditingLabel = useCallback(() => {
+    setEditingLabel(null);
+    setLabelInput('');
+    setLabelError('');
+  }, []);
+
+  // 处理标签输入的键盘事件
+  const handleLabelKeyDown = useCallback((e: React.KeyboardEvent, boxId: string) => {
+    if (e.key === 'Enter') {
+      saveLabel(boxId);
+    } else if (e.key === 'Escape') {
+      cancelEditingLabel();
+    }
+  }, [saveLabel, cancelEditingLabel]);
 
   // 键盘快捷键
   useEffect(() => {
@@ -248,15 +328,62 @@ export function BoundingBoxEditor({
               </>
             )}
 
-            {/* 图标ID标签 */}
-            <div className={cn(
-              'absolute -top-5 left-0 px-1.5 py-0.5 text-xs font-medium rounded',
-              isSelected
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity'
-            )}>
-              {box.id}
-            </div>
+            {/* 图标标签 */}
+            {editingLabel === box.id ? (
+              <div
+                className="absolute -top-14 left-0 z-20"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <div className="bg-background border border-border rounded-lg shadow-lg p-2 min-w-[200px]">
+                  <input
+                    type="text"
+                    value={labelInput}
+                    onChange={(e) => setLabelInput(e.target.value)}
+                    onKeyDown={(e) => handleLabelKeyDown(e, box.id)}
+                    className="w-full px-2 py-1 text-sm border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="输入标签..."
+                    autoFocus
+                  />
+                  {labelError && (
+                    <div className="flex items-center gap-1 text-destructive text-xs mt-1">
+                      <AlertCircle className="w-3 h-3" />
+                      <span>{labelError}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      onClick={() => saveLabel(box.id)}
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                    >
+                      <Check className="w-3 h-3" />
+                      保存
+                    </button>
+                    <button
+                      onClick={cancelEditingLabel}
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-muted/80 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                      取消
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  'absolute -top-5 left-0 px-1.5 py-0.5 text-xs font-medium rounded cursor-pointer flex items-center gap-1',
+                  isSelected
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity'
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startEditingLabel(box.id);
+                }}
+              >
+                {iconLabels.get(box.id) || box.id}
+              </div>
+            )}
           </div>
         );
       })}

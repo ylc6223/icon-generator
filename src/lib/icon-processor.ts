@@ -1,4 +1,19 @@
 import { BoundingBox, VectorizationResult, VectorizationPreset, VECTORIZATION_PRESETS } from '@/stores/workbench-store';
+import { traceWithVTracer, initVTracer, isVTracerReady } from './vectorization/vtracer.wasm';
+
+// 初始化 VTracer WASM（在模块加载时执行）
+let vtracerInitialized = false;
+
+async function ensureVTracerInitialized() {
+  if (!vtracerInitialized) {
+    try {
+      await initVTracer();
+      vtracerInitialized = true;
+    } catch (error) {
+      console.warn('VTracer WASM 初始化失败，将使用备用算法:', error);
+    }
+  }
+}
 
 /**
  * 检测图片中的图标网格
@@ -77,8 +92,32 @@ export async function imageToSvg(
   imageData: string,
   preset: VectorizationPreset
 ): Promise<string> {
-  // TODO: 集成 VTracer WASM
-  // 目前使用临时实现
+  // 确保 VTracer 已初始化
+  await ensureVTracerInitialized();
+
+  // 如果 VTracer 可用，使用它
+  if (isVTracerReady()) {
+    try {
+      return await traceWithVTracer(imageData, preset);
+    } catch (error) {
+      console.warn('VTracer 矢量化失败，使用备用算法:', error);
+      // 降级到备用算法
+      return await imageToSvgFallback(imageData, preset);
+    }
+  }
+
+  // 否则使用备用算法
+  return await imageToSvgFallback(imageData, preset);
+}
+
+/**
+ * 备用矢量化算法（当 VTracer 不可用时使用）
+ * 使用简单的 potrace 算法
+ */
+async function imageToSvgFallback(
+  imageData: string,
+  preset: VectorizationPreset
+): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
