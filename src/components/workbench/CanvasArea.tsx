@@ -1,7 +1,8 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { Upload, Grid, Image as ImageIcon, Layers } from 'lucide-react';
 import { UploadZone } from './UploadZone';
 import { IconPreviewCard } from './IconPreviewCard';
+import { BoundingBoxEditor } from './BoundingBoxEditor';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { detectIconsInImage } from '@/lib/icon-processor';
 import { cn } from '@/lib/utils';
@@ -15,12 +16,39 @@ export function CanvasArea() {
     detectedIcons,
     viewMode,
     gridSize,
+    imageInfo,
+    selectedBoxId,
     setStatus,
     setDetectedIcons,
     toggleIconSelection,
     setViewMode,
+    selectBox,
+    updateBox,
+    deleteBox,
+    undo,
+    redo,
+    saveBoxHistory,
   } = useWorkbenchStore();
   const { t } = useTranslation();
+
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+
+  // 处理撤销/重做快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   const processImage = useCallback(async () => {
     if (!uploadedImage) return;
@@ -123,7 +151,12 @@ export function CanvasArea() {
           <OriginalView
             uploadedImage={uploadedImage}
             detectedIcons={detectedIcons}
+            selectedBoxId={selectedBoxId}
+            imageInfo={imageInfo}
             onToggleIcon={toggleIconSelection}
+            onBoxSelect={selectBox}
+            onBoxUpdate={updateBox}
+            onBoxDelete={deleteBox}
           />
         ) : (
           <GridView
@@ -139,10 +172,24 @@ export function CanvasArea() {
 interface OriginalViewProps {
   uploadedImage: string;
   detectedIcons: import('@/stores/workbench-store').DetectedIcon[];
+  selectedBoxId: string | null;
+  imageInfo: { width: number; height: number; name: string } | null;
   onToggleIcon: (id: string) => void;
+  onBoxSelect: (id: string | null) => void;
+  onBoxUpdate: (id: string, changes: Partial<Pick<import('@/stores/workbench-store').DetectedIcon, 'x' | 'y' | 'width' | 'height'>>) => void;
+  onBoxDelete: (id: string) => void;
 }
 
-function OriginalView({ uploadedImage, detectedIcons, onToggleIcon }: OriginalViewProps) {
+function OriginalView({
+  uploadedImage,
+  detectedIcons,
+  selectedBoxId,
+  imageInfo,
+  onToggleIcon,
+  onBoxSelect,
+  onBoxUpdate,
+  onBoxDelete,
+}: OriginalViewProps) {
   return (
     <div className="flex items-center justify-center min-h-full">
       <div className="relative inline-block rounded-lg overflow-hidden shadow-soft-lg bg-background">
@@ -152,27 +199,19 @@ function OriginalView({ uploadedImage, detectedIcons, onToggleIcon }: OriginalVi
           className="max-w-full max-h-[calc(100vh-280px)] object-contain"
         />
 
-        {/* Bounding boxes overlay */}
-        <div className="absolute inset-0">
-          {detectedIcons.map((icon) => (
-            <div
-              key={icon.id}
-              onClick={() => onToggleIcon(icon.id)}
-              className={cn(
-                'absolute border-2 cursor-pointer transition-all duration-150',
-                icon.selected
-                  ? 'border-primary bg-primary/10'
-                  : 'border-muted-foreground/30 bg-muted-foreground/5 hover:border-primary/50'
-              )}
-              style={{
-                left: `${(icon.x / (icon.width * Math.sqrt(detectedIcons.length))) * 100}%`,
-                top: `${(icon.y / (icon.height * Math.sqrt(detectedIcons.length))) * 100}%`,
-                width: `${100 / Math.sqrt(detectedIcons.length)}%`,
-                height: `${100 / Math.sqrt(detectedIcons.length)}%`,
-              }}
-            />
-          ))}
-        </div>
+        {/* Bounding Box Editor */}
+        {imageInfo && (
+          <BoundingBoxEditor
+            imageWidth={imageInfo.width}
+            imageHeight={imageInfo.height}
+            detectedIcons={detectedIcons}
+            selectedBoxId={selectedBoxId}
+            onBoxSelect={onBoxSelect}
+            onBoxUpdate={onBoxUpdate}
+            onBoxDelete={onBoxDelete}
+            onSaveHistory={saveBoxHistory}
+          />
+        )}
       </div>
     </div>
   );
