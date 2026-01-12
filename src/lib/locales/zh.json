@@ -1,0 +1,72 @@
+{
+  "appName": "图标工作台",
+  "topBar": {
+    "noProject": "无项目",
+    "projectName": "AI 图标批量处理",
+    "export": "导出 SVG",
+    "settings": "设置",
+    "resetWorkspace": "重置工作区",
+    "language": "语言",
+    "theme": "主题"
+  },
+  "uploadZone": {
+    "title": "上传图标网格",
+    "description": "拖放图片到这里，或点击选择文件",
+    "supportedFormats": "支持 PNG, JPG, WebP 格式",
+    "dropToUpload": "拖放上传",
+    "dropImageOrClick": "拖放图片或点击选择",
+    "replace": "替换",
+    "uploadedMatrix": "已上传的图标矩阵",
+    "sourceImage": "源图片"
+  },
+  "canvasArea": {
+    "originalView": "原始视图",
+    "gridView": "网格视图",
+    "selected": "已选择",
+    "dropYourImage": "拖放您的 AI 生成的图标图片",
+    "uploadToStart": "上传图标矩阵图片开始使用",
+    "detectingIcons": "正在检测图标...",
+    "processing": "正在处理..."
+  },
+  "propertiesPanel": {
+    "title": "属性面板",
+    "gridSize": "网格尺寸",
+    "vectorizationPreset": "矢量化预设",
+    "gridLayout": "网格布局",
+    "vectorizationQuality": "矢量化质量",
+    "presets": {
+      "balanced": "平衡",
+      "clean": "清晰",
+      "precise": "精确",
+      "balancedDesc": "质量和文件大小的良好平衡",
+      "cleanDesc": "更平滑的路径，简化的形状",
+      "preciseDesc": "最大程度保留细节"
+    },
+    "selectInfo": "{{count}} / {{total}} 已选择",
+    "selection": "选择",
+    "all": "全部",
+    "none": "无",
+    "uploadToSeeProperties": "上传图片以查看属性"
+  },
+  "assetsPanel": {
+    "title": "资源面板",
+    "sourceImage": "源图片",
+    "backgroundMode": "背景模式",
+    "autoDetected": "自动检测（纯色）"
+  },
+  "statusBar": {
+    "idle": "就绪",
+    "uploading": "正在上传...",
+    "detecting": "正在检测图标...",
+    "processing": "正在处理...",
+    "ready": "就绪",
+    "iconsSelected": "已选择 {{count}} / {{total}} 个图标",
+    "localProcessing": "所有处理均在本地进行"
+  },
+  "toasts": {
+    "exportSuccess": "导出成功",
+    "exportSuccessDesc": "已导出 {{count}} 个 SVG 图标",
+    "exportFailed": "导出失败",
+    "exportFailedDesc": "导出图标时发生错误"
+  }
+}

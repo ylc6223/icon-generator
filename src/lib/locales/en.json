@@ -1,0 +1,72 @@
+{
+  "appName": "Icon Workbench",
+  "topBar": {
+    "noProject": "No project",
+    "projectName": "AI Icon Batch",
+    "export": "Export SVG",
+    "settings": "Settings",
+    "resetWorkspace": "Reset Workspace",
+    "language": "Language",
+    "theme": "Theme"
+  },
+  "uploadZone": {
+    "title": "Upload Icon Grid",
+    "description": "Drag and drop an image here, or click to select",
+    "supportedFormats": "Supports PNG, JPG, WebP formats",
+    "dropToUpload": "Drop to upload",
+    "dropImageOrClick": "Drop image or click to select",
+    "replace": "Replace",
+    "uploadedMatrix": "Uploaded matrix",
+    "sourceImage": "Source Image"
+  },
+  "canvasArea": {
+    "originalView": "Original",
+    "gridView": "Grid",
+    "selected": "selected",
+    "dropYourImage": "Drop your AI-generated icon image",
+    "uploadToStart": "Upload an icon matrix image to get started",
+    "detectingIcons": "Detecting icons...",
+    "processing": "Processing..."
+  },
+  "propertiesPanel": {
+    "title": "Properties Panel",
+    "gridSize": "Grid Size",
+    "vectorizationPreset": "Vectorization Preset",
+    "gridLayout": "Grid Layout",
+    "vectorizationQuality": "Vectorization Quality",
+    "presets": {
+      "balanced": "Balanced",
+      "clean": "Clean",
+      "precise": "Precise",
+      "balancedDesc": "Good balance of quality and file size",
+      "cleanDesc": "Smoother paths, simplified shapes",
+      "preciseDesc": "Maximum detail preservation"
+    },
+    "selectInfo": "{{count}} / {{total}} selected",
+    "selection": "Selection",
+    "all": "All",
+    "none": "None",
+    "uploadToSeeProperties": "Upload an image to see properties"
+  },
+  "assetsPanel": {
+    "title": "Assets Panel",
+    "sourceImage": "Source Image",
+    "backgroundMode": "Background Mode",
+    "autoDetected": "Auto-detected (solid)"
+  },
+  "statusBar": {
+    "idle": "Ready",
+    "uploading": "Uploading...",
+    "detecting": "Detecting icons...",
+    "processing": "Processing...",
+    "ready": "Ready",
+    "iconsSelected": "{{count}} of {{total}} icons selected",
+    "localProcessing": "All processing happens locally"
+  },
+  "toasts": {
+    "exportSuccess": "Export successful",
+    "exportSuccessDesc": "{{count}} icons exported as SVG",
+    "exportFailed": "Export failed",
+    "exportFailedDesc": "An error occurred while exporting icons"
+  }
+}
