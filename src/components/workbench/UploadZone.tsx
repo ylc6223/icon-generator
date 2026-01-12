@@ -10,7 +10,7 @@ interface UploadZoneProps {
 
 export function UploadZone({ compact = false }: UploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const { setUploadedImage, uploadedImage, imageInfo } = useWorkbenchStore();
+  const { setOriginalImage, originalImage, imageInfo } = useWorkbenchStore();
   const { t } = useTranslation();
 
   const handleFile = useCallback((file: File) => {
@@ -25,16 +25,15 @@ export function UploadZone({ compact = false }: UploadZoneProps) {
       // Get image dimensions
       const img = new Image();
       img.onload = () => {
-        setUploadedImage(result, file, {
+        setOriginalImage(result, {
           width: img.width,
           height: img.height,
-          name: file.name,
         });
       };
       img.src = result;
     };
     reader.readAsDataURL(file);
-  }, [setUploadedImage]);
+  }, [setOriginalImage]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -70,7 +69,7 @@ export function UploadZone({ compact = false }: UploadZoneProps) {
   }, [handleFile]);
 
   // Show uploaded image preview in compact mode
-  if (compact && uploadedImage) {
+  if (compact && originalImage) {
     return (
       <div className="space-y-3">
         <div
@@ -78,7 +77,7 @@ export function UploadZone({ compact = false }: UploadZoneProps) {
           onClick={handleClick}
         >
           <img
-            src={uploadedImage}
+            src={originalImage}
             alt={t('uploadZone.uploadedMatrix')}
             className="w-full h-auto max-h-40 object-contain bg-canvas"
           />
@@ -89,11 +88,8 @@ export function UploadZone({ compact = false }: UploadZoneProps) {
           </div>
         </div>
         {imageInfo && (
-          <div className="space-y-1">
-            <p className="text-body-sm text-foreground truncate">{imageInfo.name}</p>
-            <p className="text-body-sm text-muted-foreground">
-              {imageInfo.width} x {imageInfo.height}px
-            </p>
+          <div className="text-body-sm text-muted-foreground">
+            {imageInfo.width} x {imageInfo.height}px
           </div>
         )}
       </div>

@@ -1,14 +1,17 @@
-import { DetectedIcon } from '@/stores/workbench-store';
+import { BoundingBox, VectorizationResult, VectorizationPreset, VECTORIZATION_PRESETS } from '@/stores/workbench-store';
 
 /**
- * Detects icon regions in a grid-based image
- * Assumes icons are arranged in a regular grid pattern
+ * 检测图片中的图标网格
+ * @param imageData base64编码的图片
+ * @param rows 行数
+ * @param cols 列数
+ * @returns 检测到的边界框数组
  */
 export async function detectIconsInImage(
   imageData: string,
-  gridRows: number,
-  gridCols: number
-): Promise<DetectedIcon[]> {
+  rows: number,
+  cols: number
+): Promise<BoundingBox[]> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -23,20 +26,20 @@ export async function detectIconsInImage(
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
 
-      const cellWidth = Math.floor(img.width / gridCols);
-      const cellHeight = Math.floor(img.height / gridRows);
-      const icons: DetectedIcon[] = [];
+      const cellWidth = Math.floor(img.width / cols);
+      const cellHeight = Math.floor(img.height / rows);
+      const boxes: BoundingBox[] = [];
 
-      for (let row = 0; row < gridRows; row++) {
-        for (let col = 0; col < gridCols; col++) {
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
           const x = col * cellWidth;
           const y = row * cellHeight;
-          
+
           // Extract the cell as image data
           const cellCanvas = document.createElement('canvas');
           const cellCtx = cellCanvas.getContext('2d');
           if (!cellCtx) continue;
-          
+
           cellCanvas.width = cellWidth;
           cellCanvas.height = cellHeight;
           cellCtx.drawImage(
@@ -47,32 +50,35 @@ export async function detectIconsInImage(
 
           const imageDataUrl = cellCanvas.toDataURL('image/png');
 
-          icons.push({
-            id: `icon-${row}-${col}`,
+          boxes.push({
+            id: `box-${row}-${col}`,
             x,
             y,
             width: cellWidth,
             height: cellHeight,
-            selected: true,
             imageData: imageDataUrl,
           });
         }
       }
 
-      resolve(icons);
+      resolve(boxes);
     };
     img.src = imageData;
   });
 }
 
 /**
- * Converts an image to SVG using potrace-like tracing
- * This is a simplified version - in production you'd use a proper vectorization library
+ * 将位图转换为SVG (使用VTracer WASM)
+ * @param imageData 图标的base64数据
+ * @param preset 矢量化预设
+ * @returns SVG字符串
  */
 export async function imageToSvg(
   imageData: string,
-  preset: 'balanced' | 'clean' | 'precise'
+  preset: VectorizationPreset
 ): Promise<string> {
+  // TODO: 集成 VTracer WASM
+  // 目前使用临时实现
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -83,18 +89,18 @@ export async function imageToSvg(
         return;
       }
 
-      // Scale based on preset
-      const scale = preset === 'precise' ? 2 : preset === 'clean' ? 1.5 : 1;
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      
-      ctx.imageSmoothingEnabled = preset !== 'precise';
+      // 根据预设调整缩放
+      const scaleFactor = preset.name === 'detailed' ? 2 : preset.name === 'clean' ? 1.5 : 1;
+      canvas.width = img.width * scaleFactor;
+      canvas.height = img.height * scaleFactor;
+
+      ctx.imageSmoothingEnabled = preset.name !== 'detailed';
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // Get image data and create traced SVG
+      // 获取图像数据并生成SVG
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const svg = traceToSvg(imgData, preset);
-      
+
       resolve(svg);
     };
     img.src = imageData;
@@ -102,18 +108,82 @@ export async function imageToSvg(
 }
 
 /**
- * Simple image tracing to SVG paths
+ * 矢量化单个图标并返回完整结果
+ * @param imageData 图标的base64数据
+ * @param preset 矢量化预设
+ * @returns 矢量化结果
+ */
+export async function vectorizeIcon(
+  imageData: string,
+  preset: VectorizationPreset
+): Promise<VectorizationResult> {
+  const svg = await imageToSvg(imageData, preset);
+
+  // 计算 SVG 文件大小
+  const fileSize = new Blob([svg]).size;
+
+  // 计算路径数量
+  const pathCount = (svg.match(/<path/g) || []).length;
+
+  // 检查质量问题
+  const warnings: string[] = [];
+  if (pathCount > 500) {
+    warnings.push('路径复杂度过高，可能影响性能');
+  }
+  if (fileSize > 50 * 1024) {
+    warnings.push('SVG文件较大，可能影响加载速度');
+  }
+  if (pathCount === 0) {
+    warnings.push('未检测到任何路径');
+  }
+
+  return {
+    svg,
+    pathCount,
+    fileSize,
+    warnings,
+  };
+}
+
+/**
+ * 批量矢量化图标
+ * @param images 图标数组
+ * @param preset 矢量化预设
+ * @param onProgress 进度回调
+ * @returns 矢量化结果数组
+ */
+export async function batchVectorize(
+  images: string[],
+  preset: VectorizationPreset,
+  onProgress?: (current: number, total: number) => void
+): Promise<VectorizationResult[]> {
+  const results: VectorizationResult[] = [];
+
+  for (let i = 0; i < images.length; i++) {
+    const result = await vectorizeIcon(images[i], preset);
+    results.push(result);
+
+    if (onProgress) {
+      onProgress(i + 1, images.length);
+    }
+  }
+
+  return results;
+}
+
+/**
+ * 简单的图像追踪转SVG（临时实现，将被VTracer WASM替代）
  */
 function traceToSvg(
-  imageData: ImageData, 
-  preset: 'balanced' | 'clean' | 'precise'
+  imageData: ImageData,
+  preset: VectorizationPreset
 ): string {
   const { width, height, data } = imageData;
-  
-  // Threshold based on preset
-  const threshold = preset === 'clean' ? 200 : preset === 'precise' ? 128 : 160;
-  
-  // Create binary representation
+
+  // 根据预设设置阈值
+  const threshold = preset.name === 'clean' ? 200 : preset.name === 'detailed' ? 128 : 160;
+
+  // 创建二值化表示
   const binary: boolean[][] = [];
   for (let y = 0; y < height; y++) {
     binary[y] = [];
@@ -123,19 +193,19 @@ function traceToSvg(
       const g = data[idx + 1];
       const b = data[idx + 2];
       const a = data[idx + 3];
-      
-      // Check if pixel is "foreground" (not background/white)
+
+      // 检查像素是否为前景
       const brightness = (r + g + b) / 3;
       const isBackground = brightness > threshold || a < 128;
       binary[y][x] = !isBackground;
     }
   }
 
-  // Generate simple path data using edge detection
+  // 生成路径
   const paths = generatePaths(binary, width, height);
-  
-  // Simplify paths based on preset
-  const simplifyFactor = preset === 'precise' ? 0.5 : preset === 'clean' ? 2 : 1;
+
+  // 根据预设简化路径
+  const simplifyFactor = preset.name === 'detailed' ? 0.5 : preset.name === 'clean' ? 2 : 1;
   const simplifiedPaths = paths.map(path => simplifyPath(path, simplifyFactor));
 
   const pathStrings = simplifiedPaths
@@ -169,14 +239,14 @@ function generatePaths(binary: boolean[][], width: number, height: number): Poin
 
   const paths: Point[][] = [];
 
-  // Simple contour tracing
+  // 简单的轮廓追踪
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       if (binary[y][x] && !visited[y][x]) {
-        // Check if this is an edge pixel
-        const isEdge = !binary[y-1][x] || !binary[y+1][x] || 
+        // 检查是否为边缘像素
+        const isEdge = !binary[y-1][x] || !binary[y+1][x] ||
                        !binary[y][x-1] || !binary[y][x+1];
-        
+
         if (isEdge) {
           const path = traceContour(binary, visited, x, y, width, height);
           if (path.length > 4) {
@@ -192,9 +262,9 @@ function generatePaths(binary: boolean[][], width: number, height: number): Poin
 }
 
 function traceContour(
-  binary: boolean[][], 
-  visited: boolean[][], 
-  startX: number, 
+  binary: boolean[][],
+  visited: boolean[][],
+  startX: number,
   startY: number,
   width: number,
   height: number
@@ -215,7 +285,7 @@ function traceContour(
     path.push({ x, y });
     visited[y][x] = true;
 
-    // Find next edge pixel
+    // 查找下一个边缘像素
     let found = false;
     for (let i = 0; i < 8; i++) {
       const newDir = (dir + i) % 8;
@@ -225,9 +295,9 @@ function traceContour(
       if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
         if (binary[ny][nx]) {
           const isEdge = nx === 0 || nx === width - 1 || ny === 0 || ny === height - 1 ||
-                        !binary[ny-1][nx] || !binary[ny+1][nx] || 
+                        !binary[ny-1][nx] || !binary[ny+1][nx] ||
                         !binary[ny][nx-1] || !binary[ny][nx+1];
-          
+
           if (isEdge && !visited[ny][nx]) {
             x = nx;
             y = ny;
@@ -248,20 +318,20 @@ function traceContour(
 
 function simplifyPath(path: Point[], tolerance: number): Point[] {
   if (path.length <= 2) return path;
-  
-  // Douglas-Peucker simplification
+
+  // Douglas-Peucker简化算法
   const sqTolerance = tolerance * tolerance;
-  
+
   function getSqDist(p1: Point, p2: Point): number {
     const dx = p1.x - p2.x;
     const dy = p1.y - p2.y;
     return dx * dx + dy * dy;
   }
-  
+
   function getSqSegDist(p: Point, p1: Point, p2: Point): number {
     let x = p1.x, y = p1.y;
     let dx = p2.x - x, dy = p2.y - y;
-    
+
     if (dx !== 0 || dy !== 0) {
       const t = ((p.x - x) * dx + (p.y - y) * dy) / (dx * dx + dy * dy);
       if (t > 1) {
@@ -272,16 +342,16 @@ function simplifyPath(path: Point[], tolerance: number): Point[] {
         y += dy * t;
       }
     }
-    
-    dx = p.x - x;
-    dy = p.y - y;
-    return dx * dx + dy * dy;
+
+    const dx2 = p.x - x;
+    const dy2 = p.y - y;
+    return dx2 * dx2 + dy2 * dy2;
   }
-  
+
   function simplifyDPStep(points: Point[], first: number, last: number, sqTol: number, simplified: Point[]): void {
     let maxSqDist = sqTol;
     let index = 0;
-    
+
     for (let i = first + 1; i < last; i++) {
       const sqDist = getSqSegDist(points[i], points[first], points[last]);
       if (sqDist > maxSqDist) {
@@ -289,38 +359,52 @@ function simplifyPath(path: Point[], tolerance: number): Point[] {
         maxSqDist = sqDist;
       }
     }
-    
+
     if (maxSqDist > sqTol) {
       if (index - first > 1) simplifyDPStep(points, first, index, sqTol, simplified);
       simplified.push(points[index]);
       if (last - index > 1) simplifyDPStep(points, index, last, sqTol, simplified);
     }
   }
-  
+
   const simplified = [path[0]];
   simplifyDPStep(path, 0, path.length - 1, sqTolerance, simplified);
   simplified.push(path[path.length - 1]);
-  
+
   return simplified;
 }
 
 /**
- * Exports selected icons as a ZIP file
+ * 导出选中的图标为ZIP文件
+ * @param boxes 边界框数组
+ * @param vectorizedIcons 矢量化结果Map
+ * @param iconLabels 图标标签Map
+ * @param preset 矢量化预设
+ * @returns ZIP文件Blob
  */
-export async function exportIconsAsZip(icons: DetectedIcon[], preset: 'balanced' | 'clean' | 'precise'): Promise<Blob> {
-  // Dynamic import for jszip
+export async function exportIconsAsZip(
+  boxes: BoundingBox[],
+  vectorizedIcons: Map<string, VectorizationResult>,
+  iconLabels: Map<string, string>,
+  preset: VectorizationPreset
+): Promise<Blob> {
   const JSZip = (await import('jszip')).default;
   const zip = new JSZip();
-  
-  const selectedIcons = icons.filter(icon => icon.selected);
-  
-  for (let i = 0; i < selectedIcons.length; i++) {
-    const icon = selectedIcons[i];
-    if (icon.imageData) {
-      const svg = await imageToSvg(icon.imageData, preset);
-      zip.file(`icon-${i + 1}.svg`, svg);
+
+  for (const box of boxes) {
+    // 获取已矢量化的SVG或生成新的
+    let result = vectorizedIcons.get(box.id);
+
+    if (!result && box.imageData) {
+      result = await vectorizeIcon(box.imageData, preset);
+    }
+
+    if (result) {
+      // 使用标签作为文件名，如果没有标签则使用ID
+      const fileName = (iconLabels.get(box.id) || box.id) + '.svg';
+      zip.file(fileName, result.svg);
     }
   }
-  
+
   return zip.generateAsync({ type: 'blob' });
 }

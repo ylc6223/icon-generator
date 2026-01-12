@@ -1,7 +1,6 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Upload, Grid, Image as ImageIcon, Layers } from 'lucide-react';
 import { UploadZone } from './UploadZone';
-import { IconPreviewCard } from './IconPreviewCard';
 import { BoundingBoxEditor } from './BoundingBoxEditor';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { detectIconsInImage } from '@/lib/icon-processor';
@@ -11,27 +10,24 @@ import { useTranslation } from 'react-i18next';
 
 export function CanvasArea() {
   const {
-    uploadedImage,
-    status,
-    detectedIcons,
-    viewMode,
-    gridSize,
+    originalImage,
     imageInfo,
-    selectedBoxId,
-    setStatus,
-    setDetectedIcons,
-    toggleIconSelection,
-    setViewMode,
+    boundingBoxes,
+    selectedBox,
+    gridRows,
+    gridCols,
+    isProcessing,
+    processingStage,
+    setBoundingBoxes,
     selectBox,
     updateBox,
     deleteBox,
     undo,
     redo,
     saveBoxHistory,
+    setProcessing,
   } = useWorkbenchStore();
   const { t } = useTranslation();
-
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
 
   // 处理撤销/重做快捷键
   useEffect(() => {
@@ -51,29 +47,29 @@ export function CanvasArea() {
   }, [undo, redo]);
 
   const processImage = useCallback(async () => {
-    if (!uploadedImage) return;
+    if (!originalImage || !imageInfo) return;
 
-    setStatus('processing');
+    setProcessing(true, 'detecting', 0);
 
     try {
-      const icons = await detectIconsInImage(uploadedImage, gridSize.rows, gridSize.cols);
-      setDetectedIcons(icons);
-      setStatus('ready');
+      const boxes = await detectIconsInImage(originalImage, gridRows, gridCols);
+      setBoundingBoxes(boxes);
+      setProcessing(false, 'detecting', 100);
     } catch (error) {
       console.error('Failed to process image:', error);
-      setStatus('idle');
+      setProcessing(false, 'detecting', 0);
     }
-  }, [uploadedImage, gridSize, setStatus, setDetectedIcons]);
+  }, [originalImage, gridRows, gridCols, imageInfo, setBoundingBoxes, setProcessing]);
 
   // Process image when uploaded
   useEffect(() => {
-    if (uploadedImage && status === 'detecting') {
+    if (originalImage && imageInfo && boundingBoxes.length === 0) {
       processImage();
     }
-  }, [uploadedImage, status, processImage]);
+  }, [originalImage, imageInfo, boundingBoxes.length, processImage]);
 
   // Empty state
-  if (!uploadedImage) {
+  if (!originalImage) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-canvas p-8">
         <div className="w-full max-w-md">
@@ -107,7 +103,7 @@ export function CanvasArea() {
   }
 
   // Processing state
-  if (status === 'detecting' || status === 'processing') {
+  if (isProcessing) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-canvas">
         <div className="text-center">
@@ -115,7 +111,7 @@ export function CanvasArea() {
             <Layers className="w-6 h-6 text-primary" />
           </div>
           <p className="text-body-lg text-foreground">
-            {status === 'detecting' ? t('canvasArea.detectingIcons') : t('canvasArea.processing')}
+            {processingStage === 'detecting' ? t('canvasArea.detectingIcons') : t('canvasArea.processing')}
           </p>
         </div>
       </div>
@@ -125,76 +121,56 @@ export function CanvasArea() {
   // Ready state with results
   return (
     <div className="flex-1 flex flex-col bg-canvas overflow-hidden">
-      {/* View Toggle */}
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'original' | 'grid')}>
-          <TabsList className="h-8">
-            <TabsTrigger value="original" className="text-body-sm gap-1.5 px-3 h-7">
-              <ImageIcon className="w-3.5 h-3.5" />
-              {t('canvasArea.originalView')}
-            </TabsTrigger>
-            <TabsTrigger value="grid" className="text-body-sm gap-1.5 px-3 h-7">
-              <Grid className="w-3.5 h-3.5" />
-              {t('canvasArea.gridView')}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
         <div className="text-body-sm text-muted-foreground">
-          {detectedIcons.filter(i => i.selected).length} / {detectedIcons.length} {t('canvasArea.selected')}
+          {boundingBoxes.length} {t('canvasArea.iconsDetected')}
         </div>
       </div>
 
       {/* Canvas Content */}
       <div className="flex-1 overflow-auto p-6">
-        {viewMode === 'original' ? (
-          <OriginalView
-            uploadedImage={uploadedImage}
-            detectedIcons={detectedIcons}
-            selectedBoxId={selectedBoxId}
-            imageInfo={imageInfo}
-            onToggleIcon={toggleIconSelection}
-            onBoxSelect={selectBox}
-            onBoxUpdate={updateBox}
-            onBoxDelete={deleteBox}
-          />
-        ) : (
-          <GridView
-            detectedIcons={detectedIcons}
-            onToggleIcon={toggleIconSelection}
-          />
-        )}
+        <OriginalView
+          originalImage={originalImage}
+          boundingBoxes={boundingBoxes}
+          selectedBox={selectedBox}
+          imageInfo={imageInfo}
+          onBoxSelect={selectBox}
+          onBoxUpdate={updateBox}
+          onBoxDelete={deleteBox}
+          onSaveHistory={saveBoxHistory}
+        />
       </div>
     </div>
   );
 }
 
 interface OriginalViewProps {
-  uploadedImage: string;
-  detectedIcons: import('@/stores/workbench-store').DetectedIcon[];
-  selectedBoxId: string | null;
-  imageInfo: { width: number; height: number; name: string } | null;
-  onToggleIcon: (id: string) => void;
+  originalImage: string;
+  boundingBoxes: import('@/stores/workbench-store').BoundingBox[];
+  selectedBox: string | null;
+  imageInfo: { width: number; height: number } | null;
   onBoxSelect: (id: string | null) => void;
-  onBoxUpdate: (id: string, changes: Partial<Pick<import('@/stores/workbench-store').DetectedIcon, 'x' | 'y' | 'width' | 'height'>>) => void;
+  onBoxUpdate: (id: string, changes: Partial<Pick<import('@/stores/workbench-store').BoundingBox, 'x' | 'y' | 'width' | 'height'>>) => void;
   onBoxDelete: (id: string) => void;
+  onSaveHistory: () => void;
 }
 
 function OriginalView({
-  uploadedImage,
-  detectedIcons,
-  selectedBoxId,
+  originalImage,
+  boundingBoxes,
+  selectedBox,
   imageInfo,
-  onToggleIcon,
   onBoxSelect,
   onBoxUpdate,
   onBoxDelete,
+  onSaveHistory,
 }: OriginalViewProps) {
   return (
     <div className="flex items-center justify-center min-h-full">
       <div className="relative inline-block rounded-lg overflow-hidden shadow-soft-lg bg-background">
         <img
-          src={uploadedImage}
+          src={originalImage}
           alt="Original matrix"
           className="max-w-full max-h-[calc(100vh-280px)] object-contain"
         />
@@ -204,39 +180,15 @@ function OriginalView({
           <BoundingBoxEditor
             imageWidth={imageInfo.width}
             imageHeight={imageInfo.height}
-            detectedIcons={detectedIcons}
-            selectedBoxId={selectedBoxId}
+            boundingBoxes={boundingBoxes}
+            selectedBox={selectedBox}
             onBoxSelect={onBoxSelect}
             onBoxUpdate={onBoxUpdate}
             onBoxDelete={onBoxDelete}
-            onSaveHistory={saveBoxHistory}
+            onSaveHistory={onSaveHistory}
           />
         )}
       </div>
-    </div>
-  );
-}
-
-interface GridViewProps {
-  detectedIcons: import('@/stores/workbench-store').DetectedIcon[];
-  onToggleIcon: (id: string) => void;
-}
-
-function GridView({ detectedIcons, onToggleIcon }: GridViewProps) {
-  return (
-    <div className="grid gap-4" style={{
-      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-      maxWidth: '800px',
-      margin: '0 auto'
-    }}>
-      {detectedIcons.map((icon, index) => (
-        <IconPreviewCard
-          key={icon.id}
-          icon={icon}
-          onToggle={onToggleIcon}
-          index={index}
-        />
-      ))}
     </div>
   );
 }

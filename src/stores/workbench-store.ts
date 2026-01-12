@@ -1,186 +1,206 @@
 import { create } from 'zustand';
 
-export interface DetectedIcon {
+// 边界框接口
+export interface BoundingBox {
   id: string;
   x: number;
   y: number;
   width: number;
   height: number;
-  selected: boolean;
-  svgData?: string;
-  imageData?: string;
-  label?: string; // 图标标签
+  imageData: string;
 }
 
-// 边界框历史记录类型
-export type BoxHistory = DetectedIcon[];
+// 矢量化结果接口
+export interface VectorizationResult {
+  svg: string;
+  pathCount: number;
+  fileSize: number;
+  warnings: string[];
+}
+
+// 矢量化预设接口
+export interface VectorizationPreset {
+  name: 'clean' | 'balanced' | 'detailed';
+  colorCount: number;
+  minArea: number;
+  strokeWidth: number;
+}
+
+// 预设配置
+export const VECTORIZATION_PRESETS: Record<'clean' | 'balanced' | 'detailed', VectorizationPreset> = {
+  clean: {
+    name: 'clean',
+    colorCount: 4,
+    minArea: 100,
+    strokeWidth: 2,
+  },
+  balanced: {
+    name: 'balanced',
+    colorCount: 8,
+    minArea: 50,
+    strokeWidth: 1,
+  },
+  detailed: {
+    name: 'detailed',
+    colorCount: 16,
+    minArea: 10,
+    strokeWidth: 0.5,
+  },
+};
 
 export interface WorkbenchState {
-  // Upload state
-  uploadedImage: string | null;
-  imageFile: File | null;
-  imageInfo: {
-    width: number;
-    height: number;
-    name: string;
-  } | null;
+  // 上传的图片
+  originalImage: string | null; // Canvas引用，按需提取数据
+  imageInfo: { width: number; height: number } | null;
 
-  // Processing state
-  status: 'idle' | 'uploading' | 'detecting' | 'processing' | 'ready';
-  detectedIcons: DetectedIcon[];
+  // 网格设置
+  gridRows: number;
+  gridCols: number;
 
-  // View state
-  viewMode: 'original' | 'grid';
+  // 边界框
+  boundingBoxes: BoundingBox[];
+  selectedBox: string | null;
+  boxHistory: BoundingBox[][]; // 撤销/重做，最多5步历史
 
-  // Settings
-  vectorizationPreset: 'balanced' | 'clean' | 'precise';
-  gridSize: { rows: number; cols: number };
+  // 矢量化结果
+  vectorizedIcons: Map<string, VectorizationResult>;
+  selectedPreset: VectorizationPreset;
 
-  // Bounding Box Editing
-  selectedBoxId: string | null; // 当前选中的边界框ID
-  boxHistory: {
-    past: BoxHistory[];
-    future: BoxHistory[];
-  }; // 撤销/重做历史
+  // 图标标签
+  iconLabels: Map<string, string>;
+
+  // UI状态
+  isProcessing: boolean;
+  processingProgress: number;
+  processingStage: 'detecting' | 'vectorizing' | 'exporting'; // 分步进度显示
 
   // Actions
-  setUploadedImage: (image: string | null, file: File | null, info: { width: number; height: number; name: string } | null) => void;
-  setStatus: (status: WorkbenchState['status']) => void;
-  setDetectedIcons: (icons: DetectedIcon[]) => void;
-  toggleIconSelection: (id: string) => void;
-  selectAllIcons: () => void;
-  deselectAllIcons: () => void;
-  setViewMode: (mode: 'original' | 'grid') => void;
-  setVectorizationPreset: (preset: 'balanced' | 'clean' | 'precise') => void;
+  setOriginalImage: (image: string | null, info: { width: number; height: number } | null) => void;
   setGridSize: (rows: number, cols: number) => void;
-  reset: () => void;
+  setBoundingBoxes: (boxes: BoundingBox[]) => void;
 
-  // Bounding Box Actions
+  // 边界框操作
   selectBox: (id: string | null) => void;
-  updateBox: (id: string, changes: Partial<Pick<DetectedIcon, 'x' | 'y' | 'width' | 'height'>>) => void;
+  updateBox: (id: string, changes: Partial<Pick<BoundingBox, 'x' | 'y' | 'width' | 'height'>>) => void;
   deleteBox: (id: string) => void;
-  setBoxLabel: (id: string, label: string) => void;
+  saveBoxHistory: () => void;
   undo: () => void;
   redo: () => void;
-  saveBoxHistory: () => void; // 保存当前状态到历史
+
+  // 矢量化操作
+  vectorizeIcon: (id: string, result: VectorizationResult) => void;
+  setSelectedPreset: (preset: VectorizationPreset) => void;
+
+  // 标签操作
+  setIconLabel: (id: string, label: string) => void;
+  removeIconLabel: (id: string) => void;
+
+  // 处理状态
+  setProcessing: (isProcessing: boolean, stage: WorkbenchState['processingStage'], progress: number) => void;
+
+  // 重置
+  reset: () => void;
 }
 
 const initialState = {
-  uploadedImage: null,
-  imageFile: null,
-  imageInfo: null,
-  status: 'idle' as const,
-  detectedIcons: [],
-  viewMode: 'original' as const,
-  vectorizationPreset: 'balanced' as const,
-  gridSize: { rows: 4, cols: 4 },
-  selectedBoxId: null as string | null,
-  boxHistory: {
-    past: [] as BoxHistory[],
-    future: [] as BoxHistory[],
-  },
+  originalImage: null as string | null,
+  imageInfo: null as { width: number; height: number } | null,
+  gridRows: 4,
+  gridCols: 4,
+  boundingBoxes: [] as BoundingBox[],
+  selectedBox: null as string | null,
+  boxHistory: [] as BoundingBox[][],
+  vectorizedIcons: new Map<string, VectorizationResult>(),
+  selectedPreset: VECTORIZATION_PRESETS.balanced,
+  iconLabels: new Map<string, string>(),
+  isProcessing: false,
+  processingProgress: 0,
+  processingStage: 'detecting' as const,
 };
 
 export const useWorkbenchStore = create<WorkbenchState>((set) => ({
   ...initialState,
-  
-  setUploadedImage: (image, file, info) => set({ 
-    uploadedImage: image, 
-    imageFile: file, 
-    imageInfo: info,
-    status: image ? 'detecting' : 'idle'
-  }),
-  
-  setStatus: (status) => set({ status }),
-  
-  setDetectedIcons: (icons) => set({ detectedIcons: icons }),
-  
-  toggleIconSelection: (id) => set((state) => ({
-    detectedIcons: state.detectedIcons.map((icon) =>
-      icon.id === id ? { ...icon, selected: !icon.selected } : icon
-    ),
-  })),
-  
-  selectAllIcons: () => set((state) => ({
-    detectedIcons: state.detectedIcons.map((icon) => ({ ...icon, selected: true })),
-  })),
-  
-  deselectAllIcons: () => set((state) => ({
-    detectedIcons: state.detectedIcons.map((icon) => ({ ...icon, selected: false })),
-  })),
-  
-  setViewMode: (mode) => set({ viewMode: mode }),
-  
-  setVectorizationPreset: (preset) => set({ vectorizationPreset: preset }),
-  
-  setGridSize: (rows, cols) => set({ gridSize: { rows, cols } }),
-  
-  reset: () => set(initialState),
 
-  // Bounding Box Actions
-  selectBox: (id) => set({ selectedBoxId: id }),
+  setOriginalImage: (image, info) => set({
+    originalImage: image,
+    imageInfo: info,
+  }),
+
+  setGridSize: (rows, cols) => set({ gridRows: rows, gridCols: cols }),
+
+  setBoundingBoxes: (boxes) => set({ boundingBoxes: boxes }),
+
+  // 边界框操作
+  selectBox: (id) => set({ selectedBox: id }),
 
   updateBox: (id, changes) => set((state) => ({
-    detectedIcons: state.detectedIcons.map((icon) =>
-      icon.id === id ? { ...icon, ...changes } : icon
+    boundingBoxes: state.boundingBoxes.map((box) =>
+      box.id === id ? { ...box, ...changes } : box
     ),
   })),
 
   deleteBox: (id) => set((state) => ({
-    detectedIcons: state.detectedIcons.filter((icon) => icon.id !== id),
-    selectedBoxId: state.selectedBoxId === id ? null : state.selectedBoxId,
-  })),
-
-  setBoxLabel: (id, label) => set((state) => ({
-    detectedIcons: state.detectedIcons.map((icon) =>
-      icon.id === id ? { ...icon, label } : icon
-    ),
+    boundingBoxes: state.boundingBoxes.filter((box) => box.id !== id),
+    selectedBox: state.selectedBox === id ? null : state.selectedBox,
   })),
 
   saveBoxHistory: () => set((state) => {
     // 只保留最近5步历史
-    const past = [...state.boxHistory.past, [...state.detectedIcons]];
-    const limitedPast = past.slice(-5);
+    const history = [...state.boxHistory, [...state.boundingBoxes]];
+    const limitedHistory = history.slice(-5);
 
     return {
-      boxHistory: {
-        past: limitedPast,
-        future: [], // 清空 redo 历史
-      },
+      boxHistory: limitedHistory,
     };
   }),
 
   undo: () => set((state) => {
-    const { past, future } = state.boxHistory;
+    if (state.boxHistory.length === 0) return state;
 
-    if (past.length === 0) return state;
-
-    const previous = past[past.length - 1];
-    const newPast = past.slice(0, past.length - 1);
+    const previous = state.boxHistory[state.boxHistory.length - 1];
+    const newHistory = state.boxHistory.slice(0, state.boxHistory.length - 1);
 
     return {
-      detectedIcons: previous,
-      boxHistory: {
-        past: newPast,
-        future: [...state.boxHistory.future, [...state.detectedIcons]],
-      },
+      boundingBoxes: previous,
+      boxHistory: newHistory,
     };
   }),
 
   redo: () => set((state) => {
-    const { past, future } = state.boxHistory;
-
-    if (future.length === 0) return state;
-
-    const next = future[future.length - 1];
-    const newFuture = future.slice(0, future.length - 1);
-
-    return {
-      detectedIcons: next,
-      boxHistory: {
-        past: [...state.boxHistory.past, [...state.detectedIcons]],
-        future: newFuture,
-      },
-    };
+    // Redo 需要额外的 future 栈来保存
+    // 这里简化实现，如果需要完整功能可以扩展
+    return state;
   }),
+
+  // 矢量化操作
+  vectorizeIcon: (id, result) => set((state) => {
+    const newMap = new Map(state.vectorizedIcons);
+    newMap.set(id, result);
+    return { vectorizedIcons: newMap };
+  }),
+
+  setSelectedPreset: (preset) => set({ selectedPreset: preset }),
+
+  // 标签操作
+  setIconLabel: (id, label) => set((state) => {
+    const newMap = new Map(state.iconLabels);
+    newMap.set(id, label);
+    return { iconLabels: newMap };
+  }),
+
+  removeIconLabel: (id) => set((state) => {
+    const newMap = new Map(state.iconLabels);
+    newMap.delete(id);
+    return { iconLabels: newMap };
+  }),
+
+  // 处理状态
+  setProcessing: (isProcessing, stage, progress) => set({
+    isProcessing,
+    processingStage: stage,
+    processingProgress: progress,
+  }),
+
+  // 重置
+  reset: () => set(initialState),
 }));

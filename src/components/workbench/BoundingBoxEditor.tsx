@@ -1,14 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { useWorkbenchStore, DetectedIcon } from '@/stores/workbench-store';
+import { useWorkbenchStore, BoundingBox } from '@/stores/workbench-store';
 
 interface BoundingBoxEditorProps {
   imageWidth: number;
   imageHeight: number;
-  detectedIcons: DetectedIcon[];
-  selectedBoxId: string | null;
+  boundingBoxes: BoundingBox[];
+  selectedBox: string | null;
   onBoxSelect: (id: string | null) => void;
-  onBoxUpdate: (id: string, changes: Partial<Pick<DetectedIcon, 'x' | 'y' | 'width' | 'height'>>) => void;
+  onBoxUpdate: (id: string, changes: Partial<Pick<BoundingBox, 'x' | 'y' | 'width' | 'height'>>) => void;
   onBoxDelete: (id: string) => void;
   onSaveHistory: () => void;
 }
@@ -18,8 +18,8 @@ type DragMode = 'none' | 'move' | 'resize-tl' | 'resize-tr' | 'resize-bl' | 'res
 export function BoundingBoxEditor({
   imageWidth,
   imageHeight,
-  detectedIcons,
-  selectedBoxId,
+  boundingBoxes,
+  selectedBox,
   onBoxSelect,
   onBoxUpdate,
   onBoxDelete,
@@ -27,14 +27,14 @@ export function BoundingBoxEditor({
 }: BoundingBoxEditorProps) {
   const [dragMode, setDragMode] = useState<DragMode>('none');
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [initialBox, setInitialBox] = useState<DetectedIcon | null>(null);
+  const [initialBox, setInitialBox] = useState<BoundingBox | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' && selectedBoxId) {
-        onBoxDelete(selectedBoxId);
+      if (e.key === 'Delete' && selectedBox) {
+        onBoxDelete(selectedBox);
       } else if (e.key === 'Escape') {
         onBoxSelect(null);
       }
@@ -42,7 +42,7 @@ export function BoundingBoxEditor({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBoxId, onBoxSelect, onBoxDelete]);
+  }, [selectedBox, onBoxSelect, onBoxDelete]);
 
   // 计算鼠标位置相对于容器的坐标
   const getRelativePosition = useCallback((clientX: number, clientY: number) => {
@@ -59,7 +59,7 @@ export function BoundingBoxEditor({
   }, [imageWidth, imageHeight]);
 
   // 判断拖拽模式
-  const getDragMode = useCallback((box: DetectedIcon, mouseX: number, mouseY: number): DragMode => {
+  const getDragMode = useCallback((box: BoundingBox, mouseX: number, mouseY: number): DragMode => {
     const handleSize = 10; // 控制点大小
     const cornerThreshold = handleSize * 1.5;
 
@@ -100,7 +100,7 @@ export function BoundingBoxEditor({
   }, []);
 
   // 处理鼠标按下
-  const handleMouseDown = useCallback((e: React.MouseEvent, box: DetectedIcon) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent, box: BoundingBox) => {
     e.stopPropagation();
 
     const pos = getRelativePosition(e.clientX, e.clientY);
@@ -128,7 +128,7 @@ export function BoundingBoxEditor({
       const dx = pos.x - dragStart.x;
       const dy = pos.y - dragStart.y;
 
-      let changes: Partial<Pick<DetectedIcon, 'x' | 'y' | 'width' | 'height'>> = {};
+      let changes: Partial<Pick<BoundingBox, 'x' | 'y' | 'width' | 'height'>> = {};
 
       switch (dragMode) {
         case 'move':
@@ -194,18 +194,18 @@ export function BoundingBoxEditor({
   }, [dragMode, initialBox, dragStart, getRelativePosition, onBoxUpdate]);
 
   // 获取鼠标样式
-  const getCursorStyle = useCallback((box: DetectedIcon) => {
-    if (selectedBoxId !== box.id) return 'pointer';
+  const getCursorStyle = useCallback((box: BoundingBox) => {
+    if (selectedBox !== box.id) return 'pointer';
 
     // 这里需要根据当前鼠标位置返回正确的样式
     // 由于React无法直接获取鼠标位置，我们在CSS中处理
     return 'move';
-  }, [selectedBoxId]);
+  }, [selectedBox]);
 
   return (
     <div ref={containerRef} className="absolute inset-0">
-      {detectedIcons.map((box) => {
-        const isSelected = box.id === selectedBoxId;
+      {boundingBoxes.map((box) => {
+        const isSelected = box.id === selectedBox;
 
         // 计算百分比位置
         const left = (box.x / imageWidth) * 100;
@@ -255,7 +255,7 @@ export function BoundingBoxEditor({
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity'
             )}>
-              {box.label || box.id}
+              {box.id}
             </div>
           </div>
         );

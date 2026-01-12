@@ -4,5 +4,4 @@ export { CanvasArea } from './CanvasArea';
 export { PropertiesPanel } from './PropertiesPanel';
 export { StatusBar } from './StatusBar';
 export { UploadZone } from './UploadZone';
-export { IconPreviewCard } from './IconPreviewCard';
 export { BoundingBoxEditor } from './BoundingBoxEditor';
