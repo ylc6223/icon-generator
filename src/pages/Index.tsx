@@ -5,8 +5,12 @@ import {
   PropertiesPanel,
   StatusBar,
 } from '@/components/workbench';
+import { useKeyboardShortcuts } from '@/hooks';
 
 const Index = () => {
+  // 启用全局键盘快捷键
+  useKeyboardShortcuts();
+
   return (
     <div className="w-full h-full flex flex-col bg-background overflow-hidden">
       {/* Top Bar */}

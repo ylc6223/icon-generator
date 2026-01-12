@@ -1,7 +1,8 @@
-import { Shield } from 'lucide-react';
+import { Shield, Loader2 } from 'lucide-react';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { Progress } from '@/components/ui/progress';
 
 export function StatusBar() {
   const {
@@ -35,21 +36,35 @@ export function StatusBar() {
   return (
     <footer className="h-statusbar flex items-center justify-between px-4 bg-background border-t border-border text-body-sm">
       {/* Left: Status */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-1">
         <div className="flex items-center gap-2">
-          <div className={cn(
-            'w-2 h-2 rounded-full',
-            getStatusColor()
-          )} />
+          {isProcessing ? (
+            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          ) : (
+            <div className={cn(
+              'w-2 h-2 rounded-full',
+              getStatusColor()
+            )} />
+          )}
           <span className="text-muted-foreground">{getStatusText()}</span>
           {isProcessing && processingProgress > 0 && (
-            <span className="text-muted-foreground">
-              ({processingProgress}%)
+            <span className="text-primary font-medium">
+              {processingProgress}%
             </span>
           )}
         </div>
 
-        {boundingBoxes.length > 0 && (
+        {/* 进度条 */}
+        {isProcessing && (
+          <div className="flex items-center gap-3 flex-1 max-w-md">
+            <Progress value={processingProgress} className="h-1.5" />
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {processingProgress}%
+            </span>
+          </div>
+        )}
+
+        {boundingBoxes.length > 0 && !isProcessing && (
           <span className="text-muted-foreground">
             {selectedBox
               ? t('statusBar.oneSelected', { total: boundingBoxes.length })

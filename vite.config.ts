@@ -26,8 +26,28 @@ export default defineConfig(({ mode }) => {
       },
     },
     base: '/',
+    worker: {
+      format: 'es',
+      plugins: () => [
+        wasm(),
+        topLevelAwait(),
+      ].filter(Boolean) as PluginOption[],
+    },
     build: {
       outDir: 'dist',
+      rollupOptions: {
+        onwarn(warning, warn) {
+          // 忽略 reference 目录的警告
+          if (warning.code === 'UNUSED_EXTERNAL_IMPORT' || warning.message.includes('reference/enter_AIIcon')) {
+            return;
+          }
+          warn(warning);
+        }
+      }
+    },
+    optimizeDeps: {
+      exclude: ['src/reference/enter_AIIcon'],
+      entries: ['index.html', '!src/reference/enter_AIIcon/**/*']
     }
   };
 });

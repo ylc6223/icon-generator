@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Check, X, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useWorkbenchStore, BoundingBox } from '@/stores/workbench-store';
 
@@ -294,8 +295,18 @@ export function BoundingBoxEditor({
         const height = (box.height / imageHeight) * 100;
 
         return (
-          <div
+          <motion.div
             key={box.id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{
+              opacity: 1,
+              scale: isSelected ? 1.02 : 1,
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 20,
+            }}
             onMouseDown={(e) => handleMouseDown(e, box)}
             className={cn(
               'absolute border-2 transition-colors duration-150 group',
@@ -315,16 +326,64 @@ export function BoundingBoxEditor({
             {isSelected && (
               <>
                 {/* 四个角的控制点 */}
-                <div className="absolute w-2 h-2 bg-primary border border-white rounded-full -top-1 -left-1 cursor-nw-resize hover:scale-125 transition-transform" />
-                <div className="absolute w-2 h-2 bg-primary border border-white rounded-full -top-1 -right-1 cursor-ne-resize hover:scale-125 transition-transform" />
-                <div className="absolute w-2 h-2 bg-primary border border-white rounded-full -bottom-1 -left-1 cursor-sw-resize hover:scale-125 transition-transform" />
-                <div className="absolute w-2 h-2 bg-primary border border-white rounded-full -bottom-1 -right-1 cursor-se-resize hover:scale-125 transition-transform" />
+                <motion.div
+                  className="absolute w-2 h-2 bg-primary border border-white rounded-full -top-1 -left-1 cursor-nw-resize"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.25 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                />
+                <motion.div
+                  className="absolute w-2 h-2 bg-primary border border-white rounded-full -top-1 -right-1 cursor-ne-resize"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.25 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                />
+                <motion.div
+                  className="absolute w-2 h-2 bg-primary border border-white rounded-full -bottom-1 -left-1 cursor-sw-resize"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.25 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                />
+                <motion.div
+                  className="absolute w-2 h-2 bg-primary border border-white rounded-full -bottom-1 -right-1 cursor-se-resize"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.25 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                />
 
                 {/* 四条边的控制点 */}
-                <div className="absolute w-2 h-2 bg-primary border border-white rounded-full -top-1 left-1/2 -translate-x-1/2 cursor-n-resize hover:scale-125 transition-transform" />
-                <div className="absolute w-2 h-2 bg-primary border border-white rounded-full -bottom-1 left-1/2 -translate-x-1/2 cursor-s-resize hover:scale-125 transition-transform" />
-                <div className="absolute w-2 h-2 bg-primary border border-white rounded-full -left-1 top-1/2 -translate-y-1/2 cursor-w-resize hover:scale-125 transition-transform" />
-                <div className="absolute w-2 h-2 bg-primary border border-white rounded-full -right-1 top-1/2 -translate-y-1/2 cursor-e-resize hover:scale-125 transition-transform" />
+                <motion.div
+                  className="absolute w-2 h-2 bg-primary border border-white rounded-full -top-1 left-1/2 -translate-x-1/2 cursor-n-resize"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.25 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                />
+                <motion.div
+                  className="absolute w-2 h-2 bg-primary border border-white rounded-full -bottom-1 left-1/2 -translate-x-1/2 cursor-s-resize"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.25 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                />
+                <motion.div
+                  className="absolute w-2 h-2 bg-primary border border-white rounded-full -left-1 top-1/2 -translate-y-1/2 cursor-w-resize"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.25 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                />
+                <motion.div
+                  className="absolute w-2 h-2 bg-primary border border-white rounded-full -right-1 top-1/2 -translate-y-1/2 cursor-e-resize"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.25 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                />
               </>
             )}
 
@@ -384,7 +443,7 @@ export function BoundingBoxEditor({
                 {iconLabels.get(box.id) || box.id}
               </div>
             )}
-          </div>
+          </motion.div>
         );
       })}
     </div>

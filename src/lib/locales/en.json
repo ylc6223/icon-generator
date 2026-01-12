@@ -38,15 +38,27 @@
       "balanced": "Balanced",
       "clean": "Clean",
       "precise": "Precise",
+      "detailed": "Detailed",
       "balancedDesc": "Good balance of quality and file size",
       "cleanDesc": "Smoother paths, simplified shapes",
-      "preciseDesc": "Maximum detail preservation"
+      "preciseDesc": "Maximum detail preservation",
+      "detailedDesc": "Preserve more details, good for complex icons"
     },
     "selectInfo": "{{count}} / {{total}} selected",
     "selection": "Selection",
     "all": "All",
     "none": "None",
     "uploadToSeeProperties": "Upload an image to see properties"
+  },
+  "previewPanel": {
+    "selectToPreview": "Select an icon to preview",
+    "originalImage": "Original Image",
+    "vectorized": "Vectorized Result",
+    "fileSize": "File Size",
+    "pathCount": "Path Count",
+    "qualityWarnings": "Quality Warnings",
+    "loadingSvg": "Loading SVG...",
+    "notVectorized": "Not vectorized yet, click vectorize button above"
   },
   "assetsPanel": {
     "title": "Assets Panel",

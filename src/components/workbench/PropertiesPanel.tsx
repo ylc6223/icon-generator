@@ -10,6 +10,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
+import { IconPreviewPanel } from './IconPreviewPanel';
+import { Separator } from '@/components/ui/separator';
 
 export function PropertiesPanel() {
   const {
@@ -48,73 +50,83 @@ export function PropertiesPanel() {
       </div>
 
       {/* Panel Content */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-6">
-        {/* Grid Settings */}
-        <div className="space-y-3">
-          <Label className="text-body-sm text-muted-foreground">
-            {t('propertiesPanel.gridLayout')}
-          </Label>
-          <Select
-            value={`${gridRows}x${gridCols}`}
-            onValueChange={(value) => {
-              const [rows, cols] = value.split('x').map(Number);
-              setGridSize(rows, cols);
-            }}
-            disabled={isProcessing}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t('propertiesPanel.gridSize')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="3x3">3 x 3 (9 icons)</SelectItem>
-              <SelectItem value="4x4">4 x 4 (16 icons)</SelectItem>
-              <SelectItem value="5x5">5 x 5 (25 icons)</SelectItem>
-              <SelectItem value="6x6">6 x 6 (36 icons)</SelectItem>
-              <SelectItem value="8x8">8 x 8 (64 icons)</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex-1 overflow-y-auto">
+        {/* 预览面板 */}
+        <div className="p-4">
+          <IconPreviewPanel />
         </div>
 
-        {/* Vectorization Preset */}
-        <div className="space-y-3">
-          <Label className="text-body-sm text-muted-foreground">
-            {t('propertiesPanel.vectorizationQuality')}
-          </Label>
-          <div className="space-y-2">
-            {(['balanced', 'clean', 'detailed'] as const).map((preset) => (
-              <button
-                key={preset}
-                onClick={() => setSelectedPreset(preset)}
-                disabled={isProcessing}
-                className={cn(
-                  'w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-all',
-                  selectedPreset.name === preset
-                    ? 'border-primary bg-accent'
-                    : 'border-border bg-surface hover:border-border-strong'
-                )}
-              >
-                <div className={cn(
-                  'w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0',
-                  selectedPreset.name === preset
-                    ? 'border-primary bg-primary'
-                    : 'border-muted-foreground/40'
-                )}>
-                  {selectedPreset.name === preset && (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
-                    </div>
+        <Separator />
+
+        {/* 设置面板 */}
+        <div className="p-4 space-y-6">
+          {/* Grid Settings */}
+          <div className="space-y-3">
+            <Label className="text-body-sm text-muted-foreground">
+              {t('propertiesPanel.gridLayout')}
+            </Label>
+            <Select
+              value={`${gridRows}x${gridCols}`}
+              onValueChange={(value) => {
+                const [rows, cols] = value.split('x').map(Number);
+                setGridSize(rows, cols);
+              }}
+              disabled={isProcessing}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t('propertiesPanel.gridSize')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3x3">3 x 3 (9 icons)</SelectItem>
+                <SelectItem value="4x4">4 x 4 (16 icons)</SelectItem>
+                <SelectItem value="5x5">5 x 5 (25 icons)</SelectItem>
+                <SelectItem value="6x6">6 x 6 (36 icons)</SelectItem>
+                <SelectItem value="8x8">8 x 8 (64 icons)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Vectorization Preset */}
+          <div className="space-y-3">
+            <Label className="text-body-sm text-muted-foreground">
+              {t('propertiesPanel.vectorizationQuality')}
+            </Label>
+            <div className="space-y-2">
+              {(['balanced', 'clean', 'detailed'] as const).map((preset) => (
+                <button
+                  key={preset}
+                  onClick={() => setSelectedPreset(preset)}
+                  disabled={isProcessing}
+                  className={cn(
+                    'w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-all',
+                    selectedPreset.name === preset
+                      ? 'border-primary bg-accent'
+                      : 'border-border bg-surface hover:border-border-strong'
                   )}
-                </div>
-                <div>
-                  <p className="text-body-sm font-medium text-foreground">
-                    {t(`propertiesPanel.presets.${preset}`)}
-                  </p>
-                  <p className="text-body-sm text-muted-foreground">
-                    {t(`propertiesPanel.presets.${preset}Desc`)}
-                  </p>
-                </div>
-              </button>
-            ))}
+                >
+                  <div className={cn(
+                    'w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0',
+                    selectedPreset.name === preset
+                      ? 'border-primary bg-primary'
+                      : 'border-muted-foreground/40'
+                  )}>
+                    {selectedPreset.name === preset && (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-body-sm font-medium text-foreground">
+                      {t(`propertiesPanel.presets.${preset}`)}
+                    </p>
+                    <p className="text-body-sm text-muted-foreground">
+                      {t(`propertiesPanel.presets.${preset}Desc`)}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

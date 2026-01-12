@@ -1,5 +1,6 @@
 import { BoundingBox, VectorizationResult, VectorizationPreset, VECTORIZATION_PRESETS } from '@/stores/workbench-store';
 import { traceWithVTracer, initVTracer, isVTracerReady } from './vectorization/vtracer.wasm';
+import { getWorkerPool } from '@/workers';
 
 // 初始化 VTracer WASM（在模块加载时执行）
 let vtracerInitialized = false;
@@ -185,7 +186,7 @@ export async function vectorizeIcon(
 }
 
 /**
- * 批量矢量化图标
+ * 批量矢量化图标 (使用WebWorker并发处理)
  * @param images 图标数组
  * @param preset 矢量化预设
  * @param onProgress 进度回调
@@ -196,18 +197,44 @@ export async function batchVectorize(
   preset: VectorizationPreset,
   onProgress?: (current: number, total: number) => void
 ): Promise<VectorizationResult[]> {
-  const results: VectorizationResult[] = [];
+  // 分块处理: 超过100个图标时分批处理
+  const CHUNK_SIZE = 100;
+  const chunks: string[][] = [];
 
-  for (let i = 0; i < images.length; i++) {
-    const result = await vectorizeIcon(images[i], preset);
-    results.push(result);
-
-    if (onProgress) {
-      onProgress(i + 1, images.length);
-    }
+  for (let i = 0; i < images.length; i += CHUNK_SIZE) {
+    chunks.push(images.slice(i, i + CHUNK_SIZE));
   }
 
-  return results;
+  const allResults: VectorizationResult[] = [];
+  let completedCount = 0;
+
+  // 获取WorkerPool实例
+  const pool = getWorkerPool();
+
+  // 逐块处理
+  for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+    const chunk = chunks[chunkIndex];
+
+    // 为当前块创建任务
+    const tasks = chunk.map((imageData, index) => ({
+      id: `icon-${chunkIndex * CHUNK_SIZE + index}`,
+      imageData,
+      preset,
+    }));
+
+    // 使用WorkerPool并发执行任务
+    const results = await pool.batchExecute(tasks, (current, total) => {
+      const overallCompleted = completedCount + current;
+      if (onProgress) {
+        onProgress(overallCompleted, images.length);
+      }
+    });
+
+    allResults.push(...results);
+    completedCount += chunk.length;
+  }
+
+  return allResults;
 }
 
 /**

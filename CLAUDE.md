@@ -197,4 +197,4 @@ const { uploadedImage, setUploadedImage, status } = useWorkbenchStore();
 Icon processing is async and returns Promises - use `await` or `.then()` when calling functions from `icon-processor.ts`.
 
 ## 开发规范
-每次完成一个小阶段的功能及时更新在checklist文件里面并提交代码，changelog文件也要写入
+每次完成一个小阶段的功能及时更新在checklist文件里面并提交代码，changelog文件也要写入，对于核心的矢量转换模块优先使用vtracer.wasm

@@ -38,15 +38,27 @@
       "balanced": "平衡",
       "clean": "清晰",
       "precise": "精确",
+      "detailed": "精细",
       "balancedDesc": "质量和文件大小的良好平衡",
       "cleanDesc": "更平滑的路径，简化的形状",
-      "preciseDesc": "最大程度保留细节"
+      "preciseDesc": "最大程度保留细节",
+      "detailedDesc": "保留更多细节，适合复杂图标"
     },
     "selectInfo": "{{count}} / {{total}} 已选择",
     "selection": "选择",
     "all": "全部",
     "none": "无",
     "uploadToSeeProperties": "上传图片以查看属性"
+  },
+  "previewPanel": {
+    "selectToPreview": "选择一个图标以预览",
+    "originalImage": "原始图片",
+    "vectorized": "矢量化结果",
+    "fileSize": "文件大小",
+    "pathCount": "路径数量",
+    "qualityWarnings": "质量警告",
+    "loadingSvg": "正在加载 SVG...",
+    "notVectorized": "尚未矢量化，请点击上方矢量化按钮"
   },
   "assetsPanel": {
     "title": "资源面板",
