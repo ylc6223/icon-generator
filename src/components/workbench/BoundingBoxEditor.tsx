@@ -268,6 +268,9 @@ export function BoundingBoxEditor({
       onBoxSelect(box.id);
     } else if (!isSelected) {
       // 未选中的框只允许选中,不允许拖拽
+      // 清理之前的拖动状态，防止状态残留
+      setDragMode('none');
+      setInitialBox(null);
       onBoxSelect(box.id);
     }
   }, [getRelativePosition, getDragMode, onBoxSelect, onSaveHistory, selectedBox]);
