@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { Upload, Grid, Image as ImageIcon, Layers } from 'lucide-react';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { UploadZone } from './UploadZone';
 import { BoundingBoxEditor } from './BoundingBoxEditor';
 import { useWorkbenchStore } from '@/stores/workbench-store';
@@ -18,6 +19,7 @@ export function CanvasArea() {
     gridCols,
     isProcessing,
     processingStage,
+    isScanning,
     setBoundingBoxes,
     selectBox,
     updateBox,
@@ -124,7 +126,19 @@ export function CanvasArea() {
 
   // Ready state with results
   return (
-    <div className="flex-1 flex flex-col bg-canvas overflow-hidden" onContextMenu={handleContextMenu}>
+    <div className="flex-1 flex flex-col bg-canvas overflow-hidden relative" onContextMenu={handleContextMenu}>
+      {/* Scanning Animation Overlay - 铺满整个工作区 */}
+      {isScanning && (
+        <div className="absolute inset-0 pointer-events-none z-50">
+          <DotLottieReact
+            src="https://lottie.host/7193ad0e-0c68-47a7-a675-8dddd1a62849/fGAoHhQayX.lottie"
+            loop
+            autoplay
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
         <div className="text-body-sm text-muted-foreground">

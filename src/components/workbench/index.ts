@@ -6,4 +6,3 @@ export { StatusBar } from './StatusBar';
 export { UploadZone } from './UploadZone';
 export { BoundingBoxEditor } from './BoundingBoxEditor';
 export { GridSuggestionBanner } from './GridSuggestionBanner';
-export { ScanningAnimation } from './ScanningAnimation';

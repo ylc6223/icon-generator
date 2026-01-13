@@ -15,6 +15,8 @@ export default defineConfig(({ mode }) => {
     plugins.push(...enterDevPlugin());
   }
   return {
+    // 在顶层添加 assetsInclude 配置
+    assetsInclude: ['**/*.wasm', '**/*.lottie'],
     server: {
       host: "::",
       port: 8080,
@@ -48,8 +50,8 @@ export default defineConfig(({ mode }) => {
           warn(warning);
         }
       },
-      // 确保 WASM 文件被正确复制
-      assetsInclude: ['**/*.wasm'],
+      // 确保 WASM 和 lottie 文件被正确复制
+      assetsInclude: ['**/*.wasm', '**/*.lottie'],
     },
     optimizeDeps: {
       exclude: ['src/reference/enter_AIIcon'],

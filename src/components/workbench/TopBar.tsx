@@ -23,6 +23,7 @@ export function TopBar() {
     isProcessing,
     reset,
     setVectorizedIcons,
+    setScanning,
     setStatus
   } = useWorkbenchStore();
   const { toast } = useToast();
@@ -40,6 +41,10 @@ export function TopBar() {
 
     try {
       setStatus('processing');
+
+      // 启动扫描动画
+      setScanning(true);
+
       const images = boundingBoxes.map(box => box.imageData);
 
       console.log('准备处理', images.length, '个图标');
@@ -65,9 +70,12 @@ export function TopBar() {
         title: t('toasts.vectorizeSuccess'),
         description: t('toasts.vectorizeSuccessDesc', { count: boundingBoxes.length }),
       });
+
+      // 扫描动画会在 2.5 秒后自动关闭（由 ScanningAnimation 组件处理）
     } catch (error) {
       console.error('❌ 矢量化失败:', error);
       setStatus('idle');
+      setScanning(false); // 出错时立即关闭动画
       toast({
         title: t('toasts.vectorizeFailed'),
         description: error instanceof Error ? error.message : t('toasts.vectorizeFailedDesc'),

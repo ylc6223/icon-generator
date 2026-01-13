@@ -46,6 +46,7 @@ export interface WorkbenchState {
   // UI状态
   status: 'idle' | 'uploading' | 'detecting' | 'processing' | 'ready';
   isProcessing: boolean;
+  isScanning: boolean; // 扫描动画状态
   processingProgress: number;
   processingStage: 'detecting' | 'vectorizing' | 'exporting'; // 分步进度显示
 
@@ -78,6 +79,7 @@ export interface WorkbenchState {
 
   // 处理状态
   setProcessing: (isProcessing: boolean, stage: WorkbenchState['processingStage'], progress: number) => void;
+  setScanning: (isScanning: boolean) => void;
 
   // 重置
   reset: () => void;
@@ -98,6 +100,7 @@ const initialState = {
   showGridSuggestion: false,
   status: 'idle' as const,
   isProcessing: false,
+  isScanning: false,
   processingProgress: 0,
   processingStage: 'detecting' as const,
 };
@@ -194,6 +197,8 @@ export const useWorkbenchStore = create<WorkbenchState>((set) => ({
     processingStage: stage,
     processingProgress: progress,
   }),
+
+  setScanning: (isScanning) => set({ isScanning }),
 
   // 重置
   reset: () => set(initialState),
