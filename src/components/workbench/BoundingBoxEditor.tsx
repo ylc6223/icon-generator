@@ -186,39 +186,60 @@ export function BoundingBoxEditor({
 
   // 判断拖拽模式
   const getDragMode = useCallback((box: BoundingBox, mouseX: number, mouseY: number): DragMode => {
-    const handleSize = 10; // 控制点大小
-    const cornerThreshold = handleSize * 1.5;
+    // 控制点实际尺寸和偏移
+    // 控制点使用 w-2 h-2 (8px) 和 -top-1/-left-1/-right-1/-bottom-1 (-4px 偏移)
+    // 所以控制点中心在边界框边缘外部 4px 处，控制点半径为 4px
+    const handleRadius = 4; // 控制点半径 (8px / 2)
+    const handleOffset = 4; // 控制点中心到边框的距离 (-top-1/-left-1 = -4px)
+    const hitArea = 8; // 扩大点击区域到 8px，提升操作体验
 
-    // 检查是否在角落控制点
-    if (Math.abs(mouseX - box.x) < cornerThreshold && Math.abs(mouseY - box.y) < cornerThreshold) {
+    // 检查是否在角落控制点（控制点在边界框角落外部）
+    // 左上角：box.x - handleOffset, box.y - handleOffset
+    if (Math.abs(mouseX - (box.x - handleOffset)) <= hitArea &&
+        Math.abs(mouseY - (box.y - handleOffset)) <= hitArea) {
       return 'resize-tl';
     }
-    if (Math.abs(mouseX - (box.x + box.width)) < cornerThreshold && Math.abs(mouseY - box.y) < cornerThreshold) {
+    // 右上角：box.x + box.width + handleOffset, box.y - handleOffset
+    if (Math.abs(mouseX - (box.x + box.width + handleOffset)) <= hitArea &&
+        Math.abs(mouseY - (box.y - handleOffset)) <= hitArea) {
       return 'resize-tr';
     }
-    if (Math.abs(mouseX - box.x) < cornerThreshold && Math.abs(mouseY - (box.y + box.height)) < cornerThreshold) {
+    // 左下角：box.x - handleOffset, box.y + box.height + handleOffset
+    if (Math.abs(mouseX - (box.x - handleOffset)) <= hitArea &&
+        Math.abs(mouseY - (box.y + box.height + handleOffset)) <= hitArea) {
       return 'resize-bl';
     }
-    if (Math.abs(mouseX - (box.x + box.width)) < cornerThreshold && Math.abs(mouseY - (box.y + box.height)) < cornerThreshold) {
+    // 右下角：box.x + box.width + handleOffset, box.y + box.height + handleOffset
+    if (Math.abs(mouseX - (box.x + box.width + handleOffset)) <= hitArea &&
+        Math.abs(mouseY - (box.y + box.height + handleOffset)) <= hitArea) {
       return 'resize-br';
     }
 
-    // 检查是否在边控制点
-    if (Math.abs(mouseY - box.y) < handleSize && mouseX > box.x && mouseX < box.x + box.width) {
+    // 检查是否在边控制点（控制点在边界框边缘外部，位于边中心）
+    // 顶部边控制点：水平居中，顶部偏移 -handleOffset
+    if (Math.abs(mouseX - (box.x + box.width / 2)) <= hitArea &&
+        Math.abs(mouseY - (box.y - handleOffset)) <= hitArea) {
       return 'resize-t';
     }
-    if (Math.abs(mouseY - (box.y + box.height)) < handleSize && mouseX > box.x && mouseX < box.x + box.width) {
+    // 底部边控制点：水平居中，底部偏移 +handleOffset
+    if (Math.abs(mouseX - (box.x + box.width / 2)) <= hitArea &&
+        Math.abs(mouseY - (box.y + box.height + handleOffset)) <= hitArea) {
       return 'resize-b';
     }
-    if (Math.abs(mouseX - box.x) < handleSize && mouseY > box.y && mouseY < box.y + box.height) {
+    // 左边控制点：垂直居中，左侧偏移 -handleOffset
+    if (Math.abs(mouseX - (box.x - handleOffset)) <= hitArea &&
+        Math.abs(mouseY - (box.y + box.height / 2)) <= hitArea) {
       return 'resize-l';
     }
-    if (Math.abs(mouseX - (box.x + box.width)) < handleSize && mouseY > box.y && mouseY < box.y + box.height) {
+    // 右边控制点：垂直居中，右侧偏移 +handleOffset
+    if (Math.abs(mouseX - (box.x + box.width + handleOffset)) <= hitArea &&
+        Math.abs(mouseY - (box.y + box.height / 2)) <= hitArea) {
       return 'resize-r';
     }
 
-    // 检查是否在边界框内部
-    if (mouseX > box.x && mouseX < box.x + box.width && mouseY > box.y && mouseY < box.y + box.height) {
+    // 检查是否在边界框内部（整个边界框区域都是 move）
+    if (mouseX >= box.x && mouseX <= box.x + box.width &&
+        mouseY >= box.y && mouseY <= box.y + box.height) {
       return 'move';
     }
 
