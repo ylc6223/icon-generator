@@ -4,6 +4,7 @@
     "noProject": "No project",
     "projectName": "AI Icon Batch",
     "export": "Export SVG",
+    "vectorize": "Vectorize",
     "settings": "Settings",
     "resetWorkspace": "Reset Workspace",
     "language": "Language",
@@ -76,6 +77,10 @@
     "localProcessing": "All processing happens locally"
   },
   "toasts": {
+    "vectorizeSuccess": "Vectorization complete",
+    "vectorizeSuccessDesc": "Successfully vectorized {{count}} icons",
+    "vectorizeFailed": "Vectorization failed",
+    "vectorizeFailedDesc": "An error occurred during vectorization",
     "exportSuccess": "Export successful",
     "exportSuccessDesc": "{{count}} icons exported as SVG",
     "exportFailed": "Export failed",

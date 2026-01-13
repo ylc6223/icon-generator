@@ -164,7 +164,7 @@ export function TopBar() {
           className="gap-2"
         >
           <Wand2 className="w-4 h-4" />
-          <span className="hidden sm:inline">{t('topBar.vectorize') || '矢量化'}</span>
+          <span className="hidden sm:inline">{t('topBar.vectorize')}</span>
           {isProcessing && (
             <div className="ml-1 w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           )}

@@ -4,6 +4,7 @@
     "noProject": "无项目",
     "projectName": "AI 图标批量处理",
     "export": "导出 SVG",
+    "vectorize": "矢量化",
     "settings": "设置",
     "resetWorkspace": "重置工作区",
     "language": "语言",
@@ -76,6 +77,10 @@
     "localProcessing": "所有处理均在本地进行"
   },
   "toasts": {
+    "vectorizeSuccess": "矢量化完成",
+    "vectorizeSuccessDesc": "已成功矢量化 {{count}} 个图标",
+    "vectorizeFailed": "矢量化失败",
+    "vectorizeFailedDesc": "矢量化过程中发生错误",
     "exportSuccess": "导出成功",
     "exportSuccessDesc": "已导出 {{count}} 个 SVG 图标",
     "exportFailed": "导出失败",
