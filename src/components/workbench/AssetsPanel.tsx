@@ -63,8 +63,8 @@ export function AssetsPanel() {
                 )}
               </div>
 
-              {/* Icon Grid - 自适应布局 */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* Icon Grid - 固定4列布局 */}
+              <div className="grid grid-cols-4 gap-2">
                 {boundingBoxes.map((box, index) => (
                   <IconGridCard
                     key={box.id}
