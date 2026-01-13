@@ -141,6 +141,11 @@ export function TopBar() {
           description: `已导出 ${successCount} 个图标到 icons.zip`,
           variant: 'default',
         });
+
+        // 导出成功后清理工作区
+        setTimeout(() => {
+          reset();
+        }, 1500); // 延迟1.5秒，让用户看到成功提示
       }
     } catch (error) {
       setStatus('idle');
