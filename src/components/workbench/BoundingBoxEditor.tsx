@@ -31,6 +31,7 @@ export function BoundingBoxEditor({
   const [dragMode, setDragMode] = useState<DragMode>('none');
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [initialBox, setInitialBox] = useState<BoundingBox | null>(null);
+  const [boxBeforeDrag, setBoxBeforeDrag] = useState<BoundingBox | null>(null); // 保存拖动前的位置
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 标签编辑状态
@@ -262,6 +263,9 @@ export function BoundingBoxEditor({
         onSaveHistory();
       }
 
+      // 保存拖动前的位置（用于还原）
+      setBoxBeforeDrag({...box});
+
       setDragMode(mode);
       setDragStart(pos);
       setInitialBox(box);
@@ -269,15 +273,17 @@ export function BoundingBoxEditor({
     } else if (!isSelected) {
       // 未选中的框只允许选中,不允许拖拽
 
-      // 如果当前有拖动状态，还原边界框到初始位置
-      if (dragMode !== 'none' && initialBox) {
+      // 如果之前有拖动过边界框（即使已经松开鼠标），还原到拖动前的位置
+      if (boxBeforeDrag) {
         // 还原到拖动前的位置
-        onBoxUpdate(initialBox.id, {
-          x: initialBox.x,
-          y: initialBox.y,
-          width: initialBox.width,
-          height: initialBox.height,
+        onBoxUpdate(boxBeforeDrag.id, {
+          x: boxBeforeDrag.x,
+          y: boxBeforeDrag.y,
+          width: boxBeforeDrag.width,
+          height: boxBeforeDrag.height,
         });
+        // 清空保存的位置
+        setBoxBeforeDrag(null);
       }
 
       // 清理拖动状态，选中新的边界框
@@ -285,7 +291,7 @@ export function BoundingBoxEditor({
       setInitialBox(null);
       onBoxSelect(box.id);
     }
-  }, [getRelativePosition, getDragMode, onBoxSelect, onSaveHistory, selectedBox, dragMode, initialBox, onBoxUpdate]);
+  }, [getRelativePosition, getDragMode, onBoxSelect, onSaveHistory, selectedBox, dragMode, initialBox, onBoxUpdate, boxBeforeDrag]);
 
   // 处理鼠标移动
   useEffect(() => {
@@ -397,6 +403,7 @@ export function BoundingBoxEditor({
     const handleMouseUp = () => {
       setDragMode('none');
       setInitialBox(null);
+      // 注意：不清空 boxBeforeDrag，保留用于后续还原
     };
 
     if (dragMode !== 'none') {
