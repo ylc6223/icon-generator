@@ -134,21 +134,22 @@ export function PropertiesPanel() {
               disabled={isProcessing}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="选择质量级别">
-                  {vTracerPresets.find(p => p.name === vTracerPresetName)?.displayName}
-                </SelectValue>
+                <SelectValue placeholder="选择质量级别" />
               </SelectTrigger>
               <SelectContent>
                 {vTracerPresets.map((preset) => (
                   <SelectItem key={preset.name} value={preset.name}>
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">{preset.displayName}</span>
-                      <span className="text-xs text-muted-foreground">{preset.description}</span>
-                    </div>
+                    {preset.displayName}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {/* 预设说明 */}
+            {vTracerPresetName && (
+              <p className="text-xs text-muted-foreground">
+                {vTracerPresets.find(p => p.name === vTracerPresetName)?.description}
+              </p>
+            )}
           </div>
         </div>
       </div>
