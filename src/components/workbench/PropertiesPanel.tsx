@@ -106,18 +106,11 @@ export function PropertiesPanel() {
                   <SelectValue placeholder="选择网格大小" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* 快速选择（正方形） */}
                   {[2, 3, 4, 5, 6, 7, 8].map((size) => (
                     <SelectItem key={size} value={`${size}x${size}`}>
-                      {size} × {size}
+                      {size} × {size} ({size * size} 个图标)
                     </SelectItem>
                   ))}
-                  {/* 自定义网格（非正方形） */}
-                  <SelectItem value="2x3">2 × 3 (6 icons)</SelectItem>
-                  <SelectItem value="2x4">2 × 4 (8 icons)</SelectItem>
-                  <SelectItem value="3x4">3 × 4 (12 icons)</SelectItem>
-                  <SelectItem value="4x5">4 × 5 (20 icons)</SelectItem>
-                  <SelectItem value="4x6">4 × 6 (24 icons)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
