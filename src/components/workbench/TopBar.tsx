@@ -153,13 +153,6 @@ export function TopBar() {
         <span className="text-body-lg text-foreground font-medium">{t('appName')}</span>
       </div>
 
-      {/* Center: Project Name (optional) */}
-      <div className="hidden md:flex items-center">
-        <span className="text-body-sm text-muted-foreground">
-          {boundingBoxes.length === 0 ? t('topBar.noProject') : `${boundingBoxes.length} ${t('canvasArea.iconsDetected')}`}
-        </span>
-      </div>
-
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
         {/* 矢量化按钮 */}
