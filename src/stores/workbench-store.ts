@@ -57,7 +57,7 @@ export interface WorkbenchState {
 
   // 边界框操作
   selectBox: (id: string | null) => void;
-  updateBox: (id: string, changes: Partial<Pick<BoundingBox, 'x' | 'y' | 'width' | 'height'>>) => void;
+  updateBox: (id: string, changes: Partial<Pick<BoundingBox, 'x' | 'y' | 'width' | 'height' | 'imageData'>>) => void;
   deleteBox: (id: string) => void;
   saveBoxHistory: () => void;
   undo: () => void;

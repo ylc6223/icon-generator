@@ -476,3 +476,53 @@ export async function exportIconsAsZip(
 
   return zip.generateAsync({ type: 'blob' });
 }
+
+/**
+ * 从原始图片中重新生成边界框的图像数据
+ * 当边界框位置或尺寸改变时调用此函数更新 imageData
+ * @param originalImage 原始图片的 base64 数据
+ * @param x 边界框 x 坐标
+ * @param y 边界框 y 坐标
+ * @param width 边界框宽度
+ * @param height 边界框高度
+ * @returns 边界框区域的 base64 图像数据
+ */
+export async function regenerateBoxImageData(
+  originalImage: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        // 创建 canvas 提取指定区域
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('无法获取 canvas context'));
+          return;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // 从原始图片中提取指定区域
+        ctx.drawImage(
+          img,
+          x, y, width, height,  // 源区域
+          0, 0, width, height    // 目标区域
+        );
+
+        const imageDataUrl = canvas.toDataURL('image/png');
+        resolve(imageDataUrl);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    img.onerror = () => reject(new Error('图片加载失败'));
+    img.src = originalImage;
+  });
+}

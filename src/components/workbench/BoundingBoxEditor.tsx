@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useWorkbenchStore, BoundingBox } from '@/stores/workbench-store';
 import { IconContextMenu } from './IconContextMenu';
+import { regenerateBoxImageData } from '@/lib/icon-processor';
 
 interface BoundingBoxEditorProps {
   imageWidth: number;
@@ -11,7 +12,7 @@ interface BoundingBoxEditorProps {
   boundingBoxes: BoundingBox[];
   selectedBox: string | null;
   onBoxSelect: (id: string | null) => void;
-  onBoxUpdate: (id: string, changes: Partial<Pick<BoundingBox, 'x' | 'y' | 'width' | 'height'>>) => void;
+  onBoxUpdate: (id: string, changes: Partial<Pick<BoundingBox, 'x' | 'y' | 'width' | 'height' | 'imageData'>>) => void;
   onBoxDelete: (id: string) => void;
   onSaveHistory: () => void;
 }
@@ -39,8 +40,8 @@ export function BoundingBoxEditor({
   const [labelInput, setLabelInput] = useState('');
   const [labelError, setLabelError] = useState('');
 
-  // 从 store 获取标签相关函数
-  const { iconLabels, setIconLabel, removeIconLabel } = useWorkbenchStore();
+  // 从 store 获取标签相关函数和原始图片
+  const { iconLabels, setIconLabel, removeIconLabel, originalImage, updateBox } = useWorkbenchStore();
 
   // 验证标签
   const validateLabel = useCallback((label: string, excludeId?: string): string => {
@@ -400,10 +401,42 @@ export function BoundingBoxEditor({
       onBoxUpdate(initialBox.id, changes);
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = async () => {
       setDragMode('none');
       setInitialBox(null);
       // 注意：不清空 boxBeforeDrag，保留用于后续还原
+
+      // 当边界框位置或尺寸改变后，重新生成 imageData
+      if (originalImage && initialBox) {
+        try {
+          // 获取更新后的边界框
+          const updatedBox = boundingBoxes.find(box => box.id === initialBox.id);
+          if (updatedBox) {
+            // 检查边界框是否有变化
+            const hasChanged =
+              updatedBox.x !== initialBox.x ||
+              updatedBox.y !== initialBox.y ||
+              updatedBox.width !== initialBox.width ||
+              updatedBox.height !== initialBox.height;
+
+            if (hasChanged) {
+              // 重新生成 imageData
+              const newImageData = await regenerateBoxImageData(
+                originalImage,
+                updatedBox.x,
+                updatedBox.y,
+                updatedBox.width,
+                updatedBox.height
+              );
+
+              // 更新边界框的 imageData
+              updateBox(updatedBox.id, { imageData: newImageData });
+            }
+          }
+        } catch (error) {
+          console.error('重新生成 imageData 失败:', error);
+        }
+      }
     };
 
     if (dragMode !== 'none') {
