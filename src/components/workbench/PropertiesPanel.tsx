@@ -138,18 +138,15 @@ export function PropertiesPanel() {
               </SelectTrigger>
               <SelectContent>
                 {vTracerPresets.map((preset) => (
-                  <SelectItem key={preset.name} value={preset.name}>
-                    {preset.displayName}
+                  <SelectItem key={preset.name} value={preset.name} textValue={preset.displayName}>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">{preset.displayName}</span>
+                      <span className="text-xs text-muted-foreground">{preset.description}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {/* 预设说明 */}
-            {vTracerPresetName && (
-              <p className="text-xs text-muted-foreground">
-                {vTracerPresets.find(p => p.name === vTracerPresetName)?.description}
-              </p>
-            )}
           </div>
         </div>
       </div>
