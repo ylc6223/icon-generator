@@ -268,12 +268,24 @@ export function BoundingBoxEditor({
       onBoxSelect(box.id);
     } else if (!isSelected) {
       // 未选中的框只允许选中,不允许拖拽
-      // 清理之前的拖动状态，防止状态残留
+
+      // 如果当前有拖动状态，还原边界框到初始位置
+      if (dragMode !== 'none' && initialBox) {
+        // 还原到拖动前的位置
+        onBoxUpdate(initialBox.id, {
+          x: initialBox.x,
+          y: initialBox.y,
+          width: initialBox.width,
+          height: initialBox.height,
+        });
+      }
+
+      // 清理拖动状态，选中新的边界框
       setDragMode('none');
       setInitialBox(null);
       onBoxSelect(box.id);
     }
-  }, [getRelativePosition, getDragMode, onBoxSelect, onSaveHistory, selectedBox]);
+  }, [getRelativePosition, getDragMode, onBoxSelect, onSaveHistory, selectedBox, dragMode, initialBox, onBoxUpdate]);
 
   // 处理鼠标移动
   useEffect(() => {
