@@ -125,7 +125,8 @@ export function TopBar() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      // 恢复状态
+      // 恢复状态 - 停止 loading
+      setProcessing(false, 'exporting', 0);
       setStatus('ready');
 
       // 详细成功提示
@@ -148,6 +149,8 @@ export function TopBar() {
         }, 1500); // 延迟1.5秒，让用户看到成功提示
       }
     } catch (error) {
+      // 恢复状态 - 停止 loading
+      setProcessing(false, 'exporting', 0);
       setStatus('idle');
       toast({
         title: '导出失败',
