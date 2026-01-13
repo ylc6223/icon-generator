@@ -8,6 +8,7 @@ export interface BoundingBox {
   width: number;
   height: number;
   imageData: string;
+  selected: boolean;  // 图标是否被选中用于导出
 }
 
 // 矢量化结果接口
@@ -62,6 +63,13 @@ export interface WorkbenchState {
   saveBoxHistory: () => void;
   undo: () => void;
   redo: () => void;
+
+  // 图标选择操作
+  toggleIconSelection: (id: string) => void;
+  selectAllIcons: () => void;
+  deselectAllIcons: () => void;
+  getSelectedIconCount: () => number;
+  hasSelectedIcons: () => boolean;
 
   // 矢量化操作
   vectorizeIcon: (id: string, result: VectorizationResult) => void;
@@ -158,6 +166,31 @@ export const useWorkbenchStore = create<WorkbenchState>((set) => ({
     // 这里简化实现，如果需要完整功能可以扩展
     return state;
   }),
+
+  // 图标选择操作
+  toggleIconSelection: (id) => set((state) => ({
+    boundingBoxes: state.boundingBoxes.map((box) =>
+      box.id === id ? { ...box, selected: !box.selected } : box
+    ),
+  })),
+
+  selectAllIcons: () => set((state) => ({
+    boundingBoxes: state.boundingBoxes.map((box) => ({ ...box, selected: true })),
+  })),
+
+  deselectAllIcons: () => set((state) => ({
+    boundingBoxes: state.boundingBoxes.map((box) => ({ ...box, selected: false })),
+  })),
+
+  getSelectedIconCount: () => {
+    const state = useWorkbenchStore.getState();
+    return state.boundingBoxes.filter((box) => box.selected).length;
+  },
+
+  hasSelectedIcons: () => {
+    const state = useWorkbenchStore.getState();
+    return state.boundingBoxes.some((box) => box.selected);
+  },
 
   // 矢量化操作
   vectorizeIcon: (id, result) => set((state) => {

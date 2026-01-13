@@ -82,6 +82,7 @@ export async function detectIconsInImage(
             width: cellWidth,
             height: cellHeight,
             imageData: imageDataUrl,
+            selected: false,  // 默认不选中
           });
         }
       }
@@ -449,32 +450,49 @@ function simplifyPath(path: Point[], tolerance: number): Point[] {
  * @param boxes 边界框数组
  * @param vectorizedIcons 矢量化结果Map
  * @param iconLabels 图标标签Map
- * @returns ZIP文件Blob
+ * @returns ZIP文件Blob和统计信息
  */
 export async function exportIconsAsZip(
   boxes: BoundingBox[],
   vectorizedIcons: Map<string, VectorizationResult>,
   iconLabels: Map<string, string>
-): Promise<Blob> {
+): Promise<{
+  blob: Blob;
+  successCount: number;
+  skippedCount: number;
+}> {
   const JSZip = (await import('jszip')).default;
   const zip = new JSZip();
 
+  let successCount = 0;
+  let skippedCount = 0;
+
   for (const box of boxes) {
-    // 获取已矢量化的SVG或生成新的
-    let result = vectorizedIcons.get(box.id);
+    try {
+      // 获取已矢量化的SVG或生成新的
+      let result = vectorizedIcons.get(box.id);
 
-    if (!result && box.imageData) {
-      result = await vectorizeIcon(box.imageData);
-    }
+      if (!result && box.imageData) {
+        result = await vectorizeIcon(box.imageData);
+      }
 
-    if (result) {
-      // 使用标签作为文件名，如果没有标签则使用ID
-      const fileName = (iconLabels.get(box.id) || box.id) + '.svg';
-      zip.file(fileName, result.svg);
+      if (result) {
+        // 使用标签作为文件名，如果没有标签则使用ID
+        const fileName = (iconLabels.get(box.id) || box.id) + '.svg';
+        zip.file(fileName, result.svg);
+        successCount++;
+      } else {
+        skippedCount++;
+      }
+    } catch (error) {
+      console.error(`图标 ${box.id} 矢量化失败:`, error);
+      skippedCount++;
     }
   }
 
-  return zip.generateAsync({ type: 'blob' });
+  const blob = await zip.generateAsync({ type: 'blob' });
+
+  return { blob, successCount, skippedCount };
 }
 
 /**

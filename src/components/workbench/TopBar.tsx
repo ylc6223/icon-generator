@@ -24,13 +24,16 @@ export function TopBar() {
     reset,
     setVectorizedIcons,
     setScanning,
-    setStatus
+    setStatus,
+    hasSelectedIcons,
+    getSelectedIconCount,
   } = useWorkbenchStore();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
 
-  const canExport = boundingBoxes.length > 0 && !isProcessing;
+  const canExport = hasSelectedIcons() && !isProcessing;
   const canVectorize = boundingBoxes.length > 0 && !isProcessing;
+  const selectedCount = getSelectedIconCount();
 
   // 批量矢量化所有图标
   const handleVectorize = async () => {
@@ -87,12 +90,22 @@ export function TopBar() {
   const handleExport = async () => {
     if (!canExport) return;
 
+    const selectedCount = getSelectedIconCount();
+
+    toast({
+      title: '开始导出',
+      description: `正在导出 ${selectedCount} 个图标...`,
+    });
+
     try {
-      const blob = await exportIconsAsZip(
-        boundingBoxes,
+      // 只导出选中的图标
+      const { blob, successCount, skippedCount } = await exportIconsAsZip(
+        boundingBoxes.filter(b => b.selected),
         vectorizedIcons,
         iconLabels
       );
+
+      // 下载文件
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -102,14 +115,24 @@ export function TopBar() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast({
-        title: t('toasts.exportSuccess'),
-        description: t('toasts.exportSuccessDesc', { count: boundingBoxes.length }),
-      });
+      // 详细成功提示
+      if (skippedCount > 0) {
+        toast({
+          title: '部分图标导出失败',
+          description: `成功导出 ${successCount} 个图标，跳过 ${skippedCount} 个`,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: '导出成功',
+          description: `已导出 ${successCount} 个图标到 icons.zip`,
+          variant: 'default',
+        });
+      }
     } catch (error) {
       toast({
-        title: t('toasts.exportFailed'),
-        description: t('toasts.exportFailedDesc'),
+        title: '导出失败',
+        description: error instanceof Error ? error.message : '未知错误',
         variant: 'destructive',
       });
     }
@@ -159,14 +182,12 @@ export function TopBar() {
           disabled={!canExport}
           className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
           size="sm"
+          title={!hasSelectedIcons() ? "请至少选择 1 个图标" : `导出 ${selectedCount} 个图标`}
         >
           <Download className="w-4 h-4" />
-          <span className="hidden sm:inline">{t('topBar.export')}</span>
-          {boundingBoxes.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary-foreground/20 rounded">
-              {boundingBoxes.length}
-            </span>
-          )}
+          <span className="hidden sm:inline">
+            {canExport ? `导出 SVG (${selectedCount}个)` : t('topBar.export')}
+          </span>
         </Button>
 
         {/* Theme Toggle */}

@@ -89,6 +89,16 @@ export function IconPreviewPanel() {
             {selectedBoundingBox.width} × {selectedBoundingBox.height}px
           </p>
         </div>
+        {/* 新增：选中状态指示 */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {selectedBoundingBox.selected ? '已选中' : '未选中'}
+          </span>
+          <div className={cn(
+            "w-3 h-3 rounded-full",
+            selectedBoundingBox.selected ? "bg-primary" : "bg-muted"
+          )} />
+        </div>
       </div>
 
       {/* 缩放控制 */}

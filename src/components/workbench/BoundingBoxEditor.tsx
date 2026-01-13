@@ -495,9 +495,12 @@ export function BoundingBoxEditor({
               onMouseDown={(e) => handleMouseDown(e, box)}
               className={cn(
                 'absolute border-2 transition-colors duration-150 group',
-                isSelected
-                  ? 'border-primary bg-primary/5 z-10'
-                  : 'border-muted-foreground/50 bg-muted-foreground/5 hover:border-primary/70'
+                // 边框样式根据选中状态
+                box.selected
+                  ? 'border-primary bg-primary/5 z-10'  // 选中：蓝色实线
+                  : 'border-muted-foreground/60 bg-muted-foreground/5 hover:border-primary/70',  // 未选中：灰色
+                // 如果是当前预览的边界框（isSelected），也应用选中样式
+                !box.selected && isSelected && 'border-primary/70'
               )}
               style={{
                 left: `${left}%`,
