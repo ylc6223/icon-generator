@@ -3,6 +3,7 @@ import { Upload, Grid, Image as ImageIcon, Layers } from 'lucide-react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { UploadZone } from './UploadZone';
 import { BoundingBoxEditor } from './BoundingBoxEditor';
+import { ImageOutline } from './ImageOutline';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { detectIconsInImage } from '@/lib/icon-processor';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,9 @@ export function CanvasArea() {
     setProcessing,
   } = useWorkbenchStore();
   const { t } = useTranslation();
+
+  // 读取环境变量，是否显示图片轮廓
+  const showImageOutline = import.meta.env.VITE_SHOW_IMAGE_OUTLINE === 'true';
 
   // 阻止右键菜单
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -147,7 +151,12 @@ export function CanvasArea() {
       </div>
 
       {/* Canvas Content */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-6 relative">
+        {/* 图片尺寸轮廓 - 仅在开发调试时显示 */}
+        {showImageOutline && originalImage && (
+          <ImageOutline targetSelector='img[alt="Original matrix"]' />
+        )}
+
         <OriginalView
           originalImage={originalImage}
           boundingBoxes={boundingBoxes}
