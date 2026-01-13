@@ -92,7 +92,7 @@ export function PropertiesPanel() {
               </div>
             </div>
 
-            {/* 网格选择（整合快速选择和自定义） */}
+            {/* 网格选择 */}
             <div className="space-y-2">
               <Select
                 value={`${gridRows}x${gridCols}`}
@@ -106,22 +106,13 @@ export function PropertiesPanel() {
                   <SelectValue placeholder="选择网格大小" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* 快速选择 */}
-                  <SelectItem value="2x2" disabled>
-                    <span className="font-medium">快速选择</span>
-                  </SelectItem>
+                  {/* 快速选择（正方形） */}
                   {[2, 3, 4, 5, 6, 7, 8].map((size) => (
                     <SelectItem key={size} value={`${size}x${size}`}>
                       {size} × {size}
                     </SelectItem>
                   ))}
-
-                  {/* 分隔线 */}
-                  <SelectItem value="custom-divider" disabled>
-                    <span className="font-medium">自定义网格</span>
-                  </SelectItem>
-
-                  {/* 自定义选项 */}
+                  {/* 自定义网格（非正方形） */}
                   <SelectItem value="2x3">2 × 3 (6 icons)</SelectItem>
                   <SelectItem value="2x4">2 × 4 (8 icons)</SelectItem>
                   <SelectItem value="3x4">3 × 4 (12 icons)</SelectItem>
