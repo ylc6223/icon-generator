@@ -301,6 +301,38 @@ export function BoundingBoxEditor({
       if (changes.width !== undefined && changes.width < 10) changes.width = 10;
       if (changes.height !== undefined && changes.height < 10) changes.height = 10;
 
+      // 边界限制：确保边界框在图片范围内
+      let newX = changes.x !== undefined ? changes.x : initialBox.x;
+      let newY = changes.y !== undefined ? changes.y : initialBox.y;
+      let newWidth = changes.width !== undefined ? changes.width : initialBox.width;
+      let newHeight = changes.height !== undefined ? changes.height : initialBox.height;
+
+      // 限制边界框不能超出图片范围
+      if (newX < 0) newX = 0;
+      if (newY < 0) newY = 0;
+      if (newX + newWidth > imageWidth) {
+        // 如果宽度超出，优先保持右边界，同时保证最小宽度
+        newWidth = Math.max(10, imageWidth - newX);
+        // 如果还是不够，调整x位置
+        if (newWidth === 10 && newX > imageWidth - 10) {
+          newX = imageWidth - 10;
+        }
+      }
+      if (newY + newHeight > imageHeight) {
+        // 如果高度超出，优先保持下边界，同时保证最小高度
+        newHeight = Math.max(10, imageHeight - newY);
+        // 如果还是不够，调整y位置
+        if (newHeight === 10 && newY > imageHeight - 10) {
+          newY = imageHeight - 10;
+        }
+      }
+
+      // 应用限制后的值
+      changes.x = newX;
+      changes.y = newY;
+      changes.width = newWidth;
+      changes.height = newHeight;
+
       onBoxUpdate(initialBox.id, changes);
     };
 
