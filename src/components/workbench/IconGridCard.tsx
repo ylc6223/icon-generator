@@ -13,12 +13,13 @@ export function IconGridCard({ box, index, onToggle }: IconGridCardProps) {
     <div
       onClick={() => onToggle(box.id)}
       className={cn(
-        'relative aspect-square rounded-lg border p-2 cursor-pointer transition-all duration-200 ease-out group',
+        'relative aspect-square w-full rounded-lg border p-2 cursor-pointer transition-all duration-200 ease-out group',
         'hover:shadow-soft-md hover:-translate-y-0.5',
         box.selected
           ? 'border-primary border-2 bg-accent'
           : 'border-border bg-surface hover:border-border-strong'
       )}
+      style={{ width: '100%' }}
     >
       {/* Icon Preview */}
       <div className="w-full h-full flex items-center justify-center">

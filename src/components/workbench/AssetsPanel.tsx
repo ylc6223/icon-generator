@@ -16,10 +16,7 @@ export function AssetsPanel() {
   } = useWorkbenchStore();
   const { t } = useTranslation();
 
-  // 计算动态网格大小
   const iconCount = boundingBoxes.length;
-  const gridCols = iconCount <= 9 ? 2 : iconCount <= 25 ? 3 : 4;
-  const cardSize = iconCount <= 9 ? 120 : iconCount <= 25 ? 100 : 80;
   const selectedCount = getSelectedIconCount();
 
   return (
@@ -66,13 +63,8 @@ export function AssetsPanel() {
                 )}
               </div>
 
-              {/* Icon Grid */}
-              <div
-                className="grid gap-2"
-                style={{
-                  gridTemplateColumns: `repeat(${gridCols}, ${cardSize}px)`,
-                }}
-              >
+              {/* Icon Grid - 自适应布局 */}
+              <div className="grid grid-cols-2 gap-2">
                 {boundingBoxes.map((box, index) => (
                   <IconGridCard
                     key={box.id}
