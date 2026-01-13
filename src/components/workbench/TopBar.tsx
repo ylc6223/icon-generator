@@ -98,11 +98,20 @@ export function TopBar() {
     });
 
     try {
+      // 设置处理状态
+      setStatus('processing');
+
       // 只导出选中的图标
       const { blob, successCount, skippedCount } = await exportIconsAsZip(
         boundingBoxes.filter(b => b.selected),
         vectorizedIcons,
-        iconLabels
+        iconLabels,
+        (current, total) => {
+          // 更新进度
+          const progress = Math.round((current / total) * 100);
+          setProcessing(true, 'exporting', progress);
+          console.log(`导出进度: ${current}/${total} (${progress}%)`);
+        }
       );
 
       // 下载文件
@@ -114,6 +123,9 @@ export function TopBar() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      // 恢复状态
+      setStatus('ready');
 
       // 详细成功提示
       if (skippedCount > 0) {
@@ -130,6 +142,7 @@ export function TopBar() {
         });
       }
     } catch (error) {
+      setStatus('idle');
       toast({
         title: '导出失败',
         description: error instanceof Error ? error.message : '未知错误',

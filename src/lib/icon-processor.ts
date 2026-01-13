@@ -233,12 +233,22 @@ export async function batchVectorize(
     } catch (error) {
       console.error(`图标 ${i} 矢量化失败:`, error);
       // 添加一个失败的结果，避免索引错位
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
       allResults.push({
         svg: '',
         pathCount: 0,
         fileSize: 0,
-        warnings: [`矢量化失败: ${error instanceof Error ? error.message : '未知错误'}`],
+        warnings: [
+          `矢量化失败: ${errorMessage}`,
+          `图标索引: ${i}`,
+          `原因: ${errorMessage.includes('WASM') ? 'VTracer WASM 初始化失败' : '图像处理错误'}`
+        ],
       });
+
+      // 即使失败也更新进度
+      if (onProgress) {
+        onProgress(i + 1, images.length);
+      }
     }
   }
 
@@ -450,12 +460,14 @@ function simplifyPath(path: Point[], tolerance: number): Point[] {
  * @param boxes 边界框数组
  * @param vectorizedIcons 矢量化结果Map
  * @param iconLabels 图标标签Map
+ * @param onProgress 进度回调 (current: number, total: number) => void
  * @returns ZIP文件Blob和统计信息
  */
 export async function exportIconsAsZip(
   boxes: BoundingBox[],
   vectorizedIcons: Map<string, VectorizationResult>,
-  iconLabels: Map<string, string>
+  iconLabels: Map<string, string>,
+  onProgress?: (current: number, total: number) => void
 ): Promise<{
   blob: Blob;
   successCount: number;
@@ -467,7 +479,8 @@ export async function exportIconsAsZip(
   let successCount = 0;
   let skippedCount = 0;
 
-  for (const box of boxes) {
+  for (let i = 0; i < boxes.length; i++) {
+    const box = boxes[i];
     try {
       // 获取已矢量化的SVG或生成新的
       let result = vectorizedIcons.get(box.id);
@@ -477,16 +490,35 @@ export async function exportIconsAsZip(
       }
 
       if (result) {
-        // 使用标签作为文件名，如果没有标签则使用ID
-        const fileName = (iconLabels.get(box.id) || box.id) + '.svg';
-        zip.file(fileName, result.svg);
-        successCount++;
+        // 检查结果是否有效（有警告但可能有 SVG）
+        if (!result.svg || result.svg.length === 0) {
+          console.warn(`图标 ${box.id} 矢量化结果为空，跳过`);
+          skippedCount++;
+        } else {
+          // 使用标签作为文件名，如果没有标签则使用ID
+          const fileName = (iconLabels.get(box.id) || box.id) + '.svg';
+          zip.file(fileName, result.svg);
+          successCount++;
+        }
       } else {
+        console.warn(`图标 ${box.id} 无矢量化结果，跳过`);
         skippedCount++;
       }
+
+      // 更新进度
+      if (onProgress) {
+        onProgress(i + 1, boxes.length);
+      }
     } catch (error) {
-      console.error(`图标 ${box.id} 矢量化失败:`, error);
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      console.error(`图标 ${box.id} (${iconLabels.get(box.id) || '未命名'}) 矢量化失败:`, error);
+      console.error(`  错误详情: ${errorMessage}`);
       skippedCount++;
+
+      // 即使失败也要更新进度
+      if (onProgress) {
+        onProgress(i + 1, boxes.length);
+      }
     }
   }
 

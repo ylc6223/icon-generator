@@ -52,10 +52,20 @@ export function AssetsPanel() {
               </div>
 
               {/* Selection Stats */}
-              <div className="text-center">
+              <div className="text-center space-y-1">
                 <p className="text-sm text-muted-foreground">
                   已选择 {selectedCount}/{iconCount} 个图标
                 </p>
+                {selectedCount > 0 && selectedCount < iconCount && (
+                  <p className="text-xs text-primary">
+                    {Math.round((selectedCount / iconCount) * 100)}%
+                  </p>
+                )}
+                {selectedCount === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    点击图标进行选择
+                  </p>
+                )}
               </div>
 
               {/* Icon Grid - 固定4列布局 */}

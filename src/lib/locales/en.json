@@ -71,6 +71,8 @@
     "idle": "Ready",
     "uploading": "Uploading...",
     "detecting": "Detecting icons...",
+    "vectorizing": "Vectorizing...",
+    "exporting": "Exporting...",
     "processing": "Processing...",
     "ready": "Ready",
     "iconsSelected": "{{count}} of {{total}} icons selected",

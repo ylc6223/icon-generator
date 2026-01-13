@@ -71,6 +71,8 @@
     "idle": "就绪",
     "uploading": "正在上传...",
     "detecting": "正在检测图标...",
+    "vectorizing": "正在矢量化...",
+    "exporting": "正在导出...",
     "processing": "正在处理...",
     "ready": "就绪",
     "iconsSelected": "已选择 {{count}} / {{total}} 个图标",
