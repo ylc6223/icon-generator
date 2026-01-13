@@ -92,28 +92,8 @@ export function PropertiesPanel() {
               </div>
             </div>
 
-            {/* 快速预设按钮 */}
+            {/* 网格选择（整合快速选择和自定义） */}
             <div className="space-y-2">
-              <span className="text-xs text-muted-foreground">快速选择</span>
-              <div className="grid grid-cols-4 gap-2">
-                {[2, 3, 4, 5, 6, 7, 8].map((size) => (
-                  <Button
-                    key={size}
-                    variant={gridRows === size && gridCols === size ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setGridSize(size, size)}
-                    disabled={isProcessing}
-                    className="text-body-sm"
-                  >
-                    {size}×{size}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* 自定义网格（下拉菜单） */}
-            <div className="space-y-2">
-              <span className="text-xs text-muted-foreground">自定义网格</span>
               <Select
                 value={`${gridRows}x${gridCols}`}
                 onValueChange={(value) => {
@@ -123,14 +103,30 @@ export function PropertiesPanel() {
                 disabled={isProcessing}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('propertiesPanel.gridSize')} />
+                  <SelectValue placeholder="选择网格大小" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2x3">2 x 3 (6 icons)</SelectItem>
-                  <SelectItem value="2x4">2 x 4 (8 icons)</SelectItem>
-                  <SelectItem value="3x4">3 x 4 (12 icons)</SelectItem>
-                  <SelectItem value="4x5">4 x 5 (20 icons)</SelectItem>
-                  <SelectItem value="4x6">4 x 6 (24 icons)</SelectItem>
+                  {/* 快速选择 */}
+                  <SelectItem value="2x2" disabled>
+                    <span className="font-medium">快速选择</span>
+                  </SelectItem>
+                  {[2, 3, 4, 5, 6, 7, 8].map((size) => (
+                    <SelectItem key={size} value={`${size}x${size}`}>
+                      {size} × {size}
+                    </SelectItem>
+                  ))}
+
+                  {/* 分隔线 */}
+                  <SelectItem value="custom-divider" disabled>
+                    <span className="font-medium">自定义网格</span>
+                  </SelectItem>
+
+                  {/* 自定义选项 */}
+                  <SelectItem value="2x3">2 × 3 (6 icons)</SelectItem>
+                  <SelectItem value="2x4">2 × 4 (8 icons)</SelectItem>
+                  <SelectItem value="3x4">3 × 4 (12 icons)</SelectItem>
+                  <SelectItem value="4x5">4 × 5 (20 icons)</SelectItem>
+                  <SelectItem value="4x6">4 × 6 (24 icons)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
