@@ -229,10 +229,13 @@ export function BoundingBoxEditor({
   const handleMouseDown = useCallback((e: React.MouseEvent, box: BoundingBox) => {
     e.stopPropagation();
 
+    // 只有选中的边界框才能拖动或调整大小
+    const isSelected = box.id === selectedBox;
+
     const pos = getRelativePosition(e.clientX, e.clientY);
     const mode = getDragMode(box, pos.x, pos.y);
 
-    if (mode !== 'none') {
+    if (isSelected && mode !== 'none') {
       // 在开始拖拽前保存历史
       if (mode === 'move' || mode.startsWith('resize')) {
         onSaveHistory();
@@ -242,8 +245,11 @@ export function BoundingBoxEditor({
       setDragStart(pos);
       setInitialBox(box);
       onBoxSelect(box.id);
+    } else if (!isSelected) {
+      // 未选中的框只允许选中,不允许拖拽
+      onBoxSelect(box.id);
     }
-  }, [getRelativePosition, getDragMode, onBoxSelect, onSaveHistory]);
+  }, [getRelativePosition, getDragMode, onBoxSelect, onSaveHistory, selectedBox]);
 
   // 处理鼠标移动
   useEffect(() => {
