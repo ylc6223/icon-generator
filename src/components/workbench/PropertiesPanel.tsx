@@ -147,12 +147,6 @@ export function PropertiesPanel() {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              当前：{vTracerPresets.find(p => p.name === vTracerPresetName)?.displayName}
-              {vTracerPresetName === 'ultra' && ' - 文件较大但细节最全'}
-              {vTracerPresetName === 'minimal' && ' - 文件最小但细节较少'}
-              {vTracerPresetName === 'detailed' && ' - 推荐使用'}
-            </p>
           </div>
         </div>
       </div>
