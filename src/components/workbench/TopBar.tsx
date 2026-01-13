@@ -25,6 +25,7 @@ export function TopBar() {
     setVectorizedIcons,
     setScanning,
     setStatus,
+    setProcessing,
     hasSelectedIcons,
     getSelectedIconCount,
   } = useWorkbenchStore();

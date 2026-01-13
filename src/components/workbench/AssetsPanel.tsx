@@ -61,11 +61,6 @@ export function AssetsPanel() {
                     {Math.round((selectedCount / iconCount) * 100)}%
                   </p>
                 )}
-                {selectedCount === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    点击图标进行选择
-                  </p>
-                )}
               </div>
 
               {/* Icon Grid - 固定4列布局 */}
